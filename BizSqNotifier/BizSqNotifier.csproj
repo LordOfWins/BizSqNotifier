@@ -75,6 +75,7 @@
 
     <!-- Config -->
     <Compile Include="Config\AppSettings.cs" />
+        <Compile Include="Config\UserSettings.cs" />  
 
     <!-- Data -->
     <Compile Include="Data\DbManager.cs" />
