@@ -248,6 +248,79 @@ namespace BizSqNotifier
             }
         }
 
+        private void BtnRegisterTasks_Click(object sender, EventArgs e)
+        {
+            var generalTime = UserSettings.Current.GeneralSendTime;
+            var unpaidTime = UserSettings.Current.UnpaidSendTime;
+
+            var confirm = MessageBox.Show(
+                $"다음 작업을 Windows 작업 스케줄러에 등록합니다:\n\n" +
+                $"  ① 매일 {generalTime} → 입주/퇴실/갱신자동 발송\n" +
+                $"  ② 매일 {unpaidTime} → 미납 1차/2차/최종 발송\n" +
+                $"  ③ 로그온 시 → 트레이 아이콘 자동 시작\n\n" +
+                "관리자 권한이 필요할 수 있습니다. 계속하시겠습니까?",
+                "작업 스케줄러 등록",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirm != DialogResult.Yes) return;
+
+            var result = TaskSchedulerHelper.RegisterAll(generalTime, unpaidTime);
+
+            lblSchedulerStatus.Text = result.Success ? "등록 완료" : "일부 실패";
+            lblSchedulerStatus.ForeColor = result.Success
+                ? Color.FromArgb(39, 174, 96)
+                : Color.FromArgb(231, 76, 60);
+
+            MessageBox.Show(
+                result.Message,
+                "작업 스케줄러 등록 결과",
+                MessageBoxButtons.OK,
+                result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+        }
+
+        private void BtnRemoveTasks_Click(object sender, EventArgs e)
+        {
+            var confirm = MessageBox.Show(
+                "등록된 모든 BizSqNotifier 작업 스케줄러를 해제합니다.\n계속하시겠습니까?",
+                "작업 스케줄러 해제",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
+            TaskSchedulerHelper.RemoveAll();
+
+            lblSchedulerStatus.Text = "해제 완료";
+            lblSchedulerStatus.ForeColor = Color.FromArgb(127, 140, 141);
+
+            MessageBox.Show("모든 작업이 해제되었습니다.", "완료",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void RefreshSchedulerStatus()
+        {
+            bool has09 = TaskSchedulerHelper.IsTaskRegistered("BizSqNotifier_09");
+            bool has13 = TaskSchedulerHelper.IsTaskRegistered("BizSqNotifier_13");
+            bool hasStartup = TaskSchedulerHelper.IsTaskRegistered("BizSqNotifier_Startup");
+
+            if (has09 && has13 && hasStartup)
+            {
+                lblSchedulerStatus.Text = "전체 등록됨";
+                lblSchedulerStatus.ForeColor = Color.FromArgb(39, 174, 96);
+            }
+            else if (has09 || has13 || hasStartup)
+            {
+                lblSchedulerStatus.Text = "일부 등록됨";
+                lblSchedulerStatus.ForeColor = Color.FromArgb(211, 84, 0);
+            }
+            else
+            {
+                lblSchedulerStatus.Text = "미등록";
+                lblSchedulerStatus.ForeColor = Color.FromArgb(231, 76, 60);
+            }
+        }
+
         #endregion
 
         #region 유틸리티

@@ -438,6 +438,8 @@ namespace BizSqNotifier
             this.panelBottom.ResumeLayout(false);
             this.panelBottom.PerformLayout();
             this.ResumeLayout(false);
+
+
         }
 
         #endregion
