@@ -4,9 +4,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using BizSqNotifier.Config;
 using BizSqNotifier.Data;
-using BizSqNotifier.Models;
 using BizSqNotifier.Services;
-
+using BizSqNotifier.Models;
 namespace BizSqNotifier
 {
     /// <summary>
@@ -44,6 +43,8 @@ namespace BizSqNotifier
             btnCancel.Click += OnCancelClick;
             btnTestDb.Click += OnTestDbClick;
             btnTestSmtp.Click += OnTestSmtpClick;
+            btnRegisterTasks.Click += BtnRegisterTasks_Click;
+            btnRemoveTasks.Click += BtnRemoveTasks_Click;
         }
 
         #endregion

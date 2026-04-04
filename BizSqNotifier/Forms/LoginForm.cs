@@ -1,9 +1,8 @@
 using System;
 using System.Data.SqlClient;
 using System.Drawing;
-using System.Security.Cryptography;
-using System.Text;
 using System.Windows.Forms;
+using BizSqNotifier.Config;
 using BizSqNotifier.Data;
 using BizSqNotifier.Services;
 
@@ -11,14 +10,9 @@ namespace BizSqNotifier
 {
     /// <summary>
     /// 로그인 폼.
-    ///
-    /// 기존 MOS 사용자 계정 DB 연동.
-    /// [ESTIMATED] 사용자 테이블: tb_user (또는 tb_admin / tb_member)
-    /// [ESTIMATED] 비밀번호 저장 방식: 평문 / MD5 / SHA256 중 하나
-    ///   → 아래 코드에서 3가지 방식 모두 시도하는 폴백 로직 적용
-    ///   → 실제 MOS DB 확인 후 불필요한 방식 제거 가능
-    ///
-    /// 인증 통과 시 DialogResult.OK 반환 → Program.cs에서 MainForm 진입
+    /// 기존 MOS 사용자 계정 DB(tb_accnt) 연동.
+    /// 비밀번호는 평문 비교 (MOS 기존 방식 동일).
+    /// 인증 통과 시 DialogResult.OK 반환 → Program.cs에서 MainForm 진입.
     /// </summary>
     public partial class LoginForm : Form
     {
@@ -115,7 +109,7 @@ namespace BizSqNotifier
 
                 if (authenticated)
                 {
-                    AppLog.Info($"로그인 성공 — 사용자: {userId}");
+                    AppLog.Info($"로그인 성공 — 사용자: {userId} ({LoginSession.UserName})");
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }
@@ -155,71 +149,45 @@ namespace BizSqNotifier
         #region 인증 로직
 
         /// <summary>
-        /// 기존 MOS DB의 사용자 테이블에서 인증을 수행합니다.
-        ///
-        /// [ESTIMATED] 테이블/컬럼 추정:
-        ///   테이블: tb_user
-        ///   아이디: user_id
-        ///   비밀번호: user_pwd
-        ///
-        /// [ESTIMATED] 비밀번호 검증 전략 (MOS 방식 불명 → 폴백 순서):
-        ///   1) 평문 비교 (VB.NET 레거시에서 흔함)
-        ///   2) MD5 해시 비교
-        ///   3) SHA256 해시 비교
-        ///
-        /// → 실제 MOS DB 확인 후 해당 방식만 남기면 됩니다.
+        /// tb_accnt 테이블에서 인증을 수행합니다.
+        /// 비밀번호는 평문 비교 (기존 MOS 동일 방식).
+        /// 인증 성공 시 LoginSession에 사용자 정보를 저장합니다.
         /// </summary>
         private bool Authenticate(string userId, string password)
         {
-            // [ESTIMATED] 테이블명/컬럼명 — 실제 DB 확인 필요
             const string sql = @"
-SELECT user_pwd
-FROM dbo.tb_user
-WHERE user_id = @userId;";
+SELECT uid, pwd, uname, accnt, br_code
+FROM dbo.tb_accnt
+WHERE uid = @uid;";
 
-            var storedPwd = DbManager.ExecuteScalar(
-                sql,
-                new SqlParameter("@userId", userId));
-
-            if (storedPwd == null || storedPwd == DBNull.Value)
-                return false;
-
-            var storedPwdStr = storedPwd.ToString();
-
-            if (string.IsNullOrEmpty(storedPwdStr))
-                return false;
-
-            // ── 1) 평문 비교 ──
-            if (storedPwdStr == password)
-                return true;
-
-            // ── 2) MD5 비교 (대소문자 무시) ──
-            var md5Hash = ComputeHash(password, MD5.Create());
-            if (string.Equals(storedPwdStr, md5Hash, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            // ── 3) SHA256 비교 (대소문자 무시) ──
-            var sha256Hash = ComputeHash(password, SHA256.Create());
-            if (string.Equals(storedPwdStr, sha256Hash, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            return false;
-        }
-
-        /// <summary>
-        /// 문자열의 해시값을 16진수 문자열로 반환합니다.
-        /// </summary>
-        private static string ComputeHash(string input, HashAlgorithm algorithm)
-        {
-            using (algorithm)
+            var rows = DbManager.ExecuteReader(sql, reader =>
             {
-                var bytes = Encoding.UTF8.GetBytes(input);
-                var hash = algorithm.ComputeHash(bytes);
-                var sb = new StringBuilder(hash.Length * 2);
-                foreach (var b in hash)
-                    sb.Append(b.ToString("x2"));
-                return sb.ToString();
-            }
+                return new
+                {
+                    Uid     = DbManager.GetSafeString(reader, "uid"),
+                    Pwd     = DbManager.GetSafeString(reader, "pwd"),
+                    Uname   = DbManager.GetSafeString(reader, "uname"),
+                    Accnt   = DbManager.GetSafeInt(reader, "accnt"),
+                    BrCode  = DbManager.GetSafeString(reader, "br_code")
+                };
+            }, new SqlParameter("@uid", userId));
+
+            if (rows.Count == 0)
+                return false;
+
+            var user = rows[0];
+
+            // 평문 비밀번호 비교 (MOS 기존 방식)
+            if (user.Pwd != password)
+                return false;
+
+            // 인증 성공 → 세션에 사용자 정보 저장
+            LoginSession.UserId = user.Uid;
+            LoginSession.UserName = user.Uname;
+            LoginSession.AccountLevel = user.Accnt;
+            LoginSession.BranchCode = user.BrCode;
+
+            return true;
         }
 
         #endregion

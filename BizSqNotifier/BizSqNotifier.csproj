@@ -76,6 +76,7 @@
     <!-- Config -->
     <Compile Include="Config\AppSettings.cs" />
         <Compile Include="Config\UserSettings.cs" />  
+    <Compile Include="Config\LoginSession.cs" />
 
     <!-- Data -->
     <Compile Include="Data\DbManager.cs" />
@@ -101,6 +102,8 @@
     <Compile Include="Services\RenewalManualService.cs" />
     <Compile Include="Services\MoveOutService.cs" />
     <Compile Include="Services\SchedulerService.cs" />
+    <Compile Include="Services\TaskSchedulerHelper.cs" />
+    <Compile Include="Services\AutoSendRunner.cs" />
 
     <!-- Forms -->
     <Compile Include="Forms\LoginForm.cs">

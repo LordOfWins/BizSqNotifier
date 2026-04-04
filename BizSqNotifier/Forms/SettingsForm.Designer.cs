@@ -359,8 +359,51 @@ namespace BizSqNotifier
             this.grpSmtp.Controls.Add(this.btnTestSmtp);
             this.grpSmtp.Controls.Add(this.lblSmtpResult);
 
+            // ── grpScheduler ──
+            this.grpScheduler = new System.Windows.Forms.GroupBox();
+            this.btnRegisterTasks = new System.Windows.Forms.Button();
+            this.btnRemoveTasks = new System.Windows.Forms.Button();
+            this.lblSchedulerStatus = new System.Windows.Forms.Label();
+
+            this.grpScheduler.Text = "작업 스케줄러";
+            this.grpScheduler.Location = new System.Drawing.Point(14, 186);
+            this.grpScheduler.Size = new System.Drawing.Size(520, 80);
+            this.grpScheduler.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
+            this.grpScheduler.Name = "grpScheduler";
+
+            this.btnRegisterTasks.Location = new System.Drawing.Point(16, 26);
+            this.btnRegisterTasks.Size = new System.Drawing.Size(110, 28);
+            this.btnRegisterTasks.Text = "스케줄러 등록";
+            this.btnRegisterTasks.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRegisterTasks.BackColor = System.Drawing.Color.FromArgb(41, 128, 185);
+            this.btnRegisterTasks.ForeColor = System.Drawing.Color.White;
+            this.btnRegisterTasks.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.btnRegisterTasks.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnRegisterTasks.Name = "btnRegisterTasks";
+
+            this.btnRemoveTasks.Location = new System.Drawing.Point(136, 26);
+            this.btnRemoveTasks.Size = new System.Drawing.Size(110, 28);
+            this.btnRemoveTasks.Text = "스케줄러 해제";
+            this.btnRemoveTasks.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRemoveTasks.BackColor = System.Drawing.Color.FromArgb(192, 57, 43);
+            this.btnRemoveTasks.ForeColor = System.Drawing.Color.White;
+            this.btnRemoveTasks.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.btnRemoveTasks.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnRemoveTasks.Name = "btnRemoveTasks";
+
+            this.lblSchedulerStatus.AutoSize = true;
+            this.lblSchedulerStatus.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.lblSchedulerStatus.Location = new System.Drawing.Point(16, 58);
+            this.lblSchedulerStatus.Text = "";
+            this.lblSchedulerStatus.Name = "lblSchedulerStatus";
+
+            this.grpScheduler.Controls.Add(this.btnRegisterTasks);
+            this.grpScheduler.Controls.Add(this.btnRemoveTasks);
+            this.grpScheduler.Controls.Add(this.lblSchedulerStatus);
+
             this.tabConnection.Controls.Add(this.grpDb);
             this.tabConnection.Controls.Add(this.grpSmtp);
+            this.tabConnection.Controls.Add(this.grpScheduler);
 
             // ════════════════════════════════════════
             // panelBottom — 저장 / 취소
@@ -448,6 +491,10 @@ namespace BizSqNotifier
         private System.Windows.Forms.TabPage tabPrinter;
         private System.Windows.Forms.TabPage tabSchedule;
         private System.Windows.Forms.TabPage tabConnection;
+        private System.Windows.Forms.GroupBox grpScheduler;
+        private System.Windows.Forms.Button btnRegisterTasks;
+        private System.Windows.Forms.Button btnRemoveTasks;
+        private System.Windows.Forms.Label lblSchedulerStatus;
 
         private System.Windows.Forms.Label lblPrinterId;
         private System.Windows.Forms.TextBox txtPrinterId;
