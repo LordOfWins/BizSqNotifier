@@ -261,9 +261,8 @@ namespace BizSqNotifier
 
             try
             {
-                int cnt = 0;
                 var svc = new MoveOutService();
-                for (int d = 0; d <= 7; d++) cnt += svc.GetTargets(d).Count;
+                int cnt = svc.GetTargetsInRange(0, 7).Count;
                 lblCardMoveOutCount.Text = cnt.ToString();
                 lblCardMoveOutSub.Text = cnt > 0 ? "7일 이내" : "예정 없음";
                 lblCardMoveOutSub.ForeColor = cnt > 0
@@ -329,3 +328,4 @@ namespace BizSqNotifier
         #endregion
     }
 }
+

@@ -227,6 +227,7 @@
   <!-- ============================================================ -->
   <ItemGroup>
     <None Include="Sql\CreateMailLogTable.sql" />
+    <None Include="Sql\VerifySchema.sql" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -240,3 +241,4 @@
     </Content>
   </ItemGroup>
 </Project>
+

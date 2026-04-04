@@ -1,0 +1,82 @@
+/*
+ * BizSqNotifier — DB 스키마 검증 쿼리
+ * SSMS에서 실행 후 결과를 개발자에게 공유하세요
+ */
+
+PRINT '=== BizSqNotifier DB Schema Verification ==='
+
+-- [E9] 계정 테이블
+PRINT ''
+PRINT '>> 계정 테이블 탐색'
+SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_NAME LIKE '%accnt%' OR TABLE_NAME LIKE '%account%'
+   OR TABLE_NAME LIKE '%user%'  OR TABLE_NAME LIKE '%login%'
+ORDER BY TABLE_NAME;
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'tb_accnt')
+BEGIN
+    PRINT '  tb_accnt 존재'
+    SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
+    FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'tb_accnt' ORDER BY ORDINAL_POSITION;
+    SELECT TOP 3 * FROM dbo.tb_accnt;
+END
+GO
+
+-- [E1][E2] tb_movein
+PRINT ''
+PRINT '>> tb_movein'
+SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'tb_movein' ORDER BY ORDINAL_POSITION;
+SELECT TOP 5 * FROM dbo.tb_movein ORDER BY movein_id DESC;
+GO
+
+-- [E3][E4] tb_invoice
+PRINT ''
+PRINT '>> tb_invoice'
+SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'tb_invoice' ORDER BY ORDINAL_POSITION;
+SELECT TOP 5 * FROM dbo.tb_invoice ORDER BY invoice_id DESC;
+GO
+
+-- [E5] tb_inv_list
+PRINT ''
+PRINT '>> tb_inv_list'
+SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'tb_inv_list' ORDER BY ORDINAL_POSITION;
+SELECT TOP 5 * FROM dbo.tb_inv_list;
+GO
+
+-- [E6] tb_branch SMTP
+PRINT ''
+PRINT '>> tb_branch'
+SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'tb_branch' ORDER BY ORDINAL_POSITION;
+SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'tb_branch' AND (COLUMN_NAME LIKE '%smtp%' OR COLUMN_NAME LIKE '%mail%');
+SELECT * FROM dbo.tb_branch;
+GO
+
+-- [E7][E8] prd_prd 분류값
+PRINT ''
+PRINT '>> prd_prd 고유값'
+SELECT DISTINCT prd_prd, COUNT(*) AS cnt FROM dbo.tb_movein GROUP BY prd_prd ORDER BY cnt DESC;
+GO
+
+-- tb_customer
+PRINT ''
+PRINT '>> tb_customer'
+SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'tb_customer' ORDER BY ORDINAL_POSITION;
+SELECT TOP 3 * FROM dbo.tb_customer;
+GO
+
+-- tb_mail_log 존재 확인
+PRINT ''
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'tb_mail_log')
+    PRINT '>> tb_mail_log 존재'
+ELSE
+    PRINT '>> tb_mail_log 없음 - CreateMailLogTable.sql 실행 필요'
+GO
+
+PRINT ''
+PRINT '=== 검증 완료 ==='
