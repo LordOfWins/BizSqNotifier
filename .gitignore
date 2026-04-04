@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# VS 캐시 추가 제외
+*.vsidx
+DocumentLayout.json
+VSWorkspaceState.json
+slnx.sqlite
