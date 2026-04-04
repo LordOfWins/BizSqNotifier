@@ -8,10 +8,7 @@ using BizSqNotifier.Services;
 
 namespace BizSqNotifier
 {
-    /// <summary>
-    /// 메인 대시보드 + 시스템 트레이 아이콘 + 스케줄러 통합.
-    /// X 버튼 → 트레이 최소화 / 트레이 우클릭 → 종료
-    /// </summary>
+    /// <summary>메인 대시보드 + 트레이 아이콘 + 스케줄러.</summary>
     public partial class MainForm : Form
     {
         private readonly MailLogRepository _logRepo;
@@ -27,18 +24,15 @@ namespace BizSqNotifier
         {
             _silentMode = silentMode;
             InitializeComponent();
-
             _logRepo = new MailLogRepository();
             _scheduler = new SchedulerService();
-
             _refreshTimer = new Timer { Interval = 300_000 };
             _refreshTimer.Tick += (s, e) => SafeRefreshDashboard();
-
             SetupTrayIcon();
             WireEvents();
         }
 
-        #region 트레이 아이콘
+        #region 트레이
 
         private void SetupTrayIcon()
         {
@@ -55,7 +49,6 @@ namespace BizSqNotifier
                 ContextMenuStrip = _trayMenu,
                 Visible = true
             };
-
             _trayIcon.DoubleClick += (s, e) => ShowDashboard();
         }
 
@@ -63,82 +56,62 @@ namespace BizSqNotifier
         {
             try
             {
-                var icoPath = System.IO.Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "app.ico");
-                if (System.IO.File.Exists(icoPath))
-                    return new Icon(icoPath);
+                var p = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
+                if (System.IO.File.Exists(p)) return new Icon(p);
             }
-            catch { /* 무시 */ }
+            catch { }
             return this.Icon ?? SystemIcons.Application;
         }
 
         private void ShowDashboard()
         {
-            this.Show();
-            this.ShowInTaskbar = true;
+            this.Show(); this.ShowInTaskbar = true;
             this.WindowState = FormWindowState.Normal;
-            this.BringToFront();
-            this.Activate();
+            this.BringToFront(); this.Activate();
             SafeRefreshDashboard();
         }
 
         private void RunAllNow()
         {
-            _trayIcon.ShowBalloonTip(3000, "BizSqNotifier",
-                "전체 발송 작업을 즉시 실행합니다...", ToolTipIcon.Info);
-
+            _trayIcon.ShowBalloonTip(3000, "BizSqNotifier", "전체 발송 즉시 실행...", ToolTipIcon.Info);
             System.Threading.ThreadPool.QueueUserWorkItem(_ =>
             {
                 try
                 {
                     _scheduler.RunAllNow();
-                    ShowBalloon("전체 발송 작업이 완료되었습니다.", ToolTipIcon.Info);
+                    ShowBalloon("전체 발송 완료", ToolTipIcon.Info);
                     SafeInvoke(() => SafeRefreshDashboard());
                 }
                 catch (Exception ex)
                 {
                     AppLog.Error("즉시 실행 오류", ex);
-                    ShowBalloon("발송 중 오류 발생. 로그를 확인하세요.", ToolTipIcon.Error);
+                    ShowBalloon("오류 발생. 로그 확인.", ToolTipIcon.Error);
                 }
             });
         }
 
         private void ExitApplication()
         {
-            var result = MessageBox.Show(
-                "BizSqNotifier를 종료하면 자동 메일 발송이 중단됩니다.\n정말 종료하시겠습니까?",
-                "프로그램 종료 확인",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-
-            if (result == DialogResult.Yes)
-            {
-                _realClose = true;
-                Application.Exit();
-            }
+            if (MessageBox.Show("종료하면 자동 발송이 중단됩니다.\n정말 종료?",
+                "종료 확인", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            { _realClose = true; Application.Exit(); }
         }
 
         private void ShowBalloon(string text, ToolTipIcon icon)
-        {
-            try { _trayIcon?.ShowBalloonTip(3000, "BizSqNotifier", text, icon); }
-            catch { /* 무시 */ }
-        }
+        { try { _trayIcon?.ShowBalloonTip(3000, "BizSqNotifier", text, icon); } catch { } }
 
-        private void SafeInvoke(Action action)
-        {
-            if (this.IsHandleCreated && !this.IsDisposed)
-                this.BeginInvoke(action);
-        }
+        private void SafeInvoke(Action a)
+        { if (this.IsHandleCreated && !this.IsDisposed) this.BeginInvoke(a); }
 
         #endregion
 
-        #region 이벤트 연결
+        #region 이벤트
 
         private void WireEvents()
         {
             this.Load += OnFormLoad;
             this.FormClosing += OnFormClosing;
             this.Resize += OnFormResize;
-
             btnRenewalList.Click += (s, e) => OpenForm<RenewalListForm>();
             btnManualSend.Click += (s, e) => OpenForm<RenewalManualForm>();
             btnLogView.Click += (s, e) => OpenForm<LogViewForm>();
@@ -148,24 +121,19 @@ namespace BizSqNotifier
 
         #endregion
 
-        #region 폼 생명주기
+        #region 생명주기
 
         private void OnFormLoad(object sender, EventArgs e)
         {
-            lblVersion.Text = "v" + System.Reflection.Assembly.GetExecutingAssembly()
-                .GetName().Version.ToString(3);
+            lblVersion.Text = "v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
 
             if (_silentMode)
             {
                 this.WindowState = FormWindowState.Minimized;
-                this.ShowInTaskbar = false;
-                this.Hide();
-                ShowBalloon("백그라운드에서 자동 메일 발송이 실행 중입니다.", ToolTipIcon.Info);
+                this.ShowInTaskbar = false; this.Hide();
+                ShowBalloon("백그라운드 자동 메일 발송 실행 중", ToolTipIcon.Info);
             }
-            else
-            {
-                SafeRefreshDashboard();
-            }
+            else SafeRefreshDashboard();
 
             _refreshTimer.Start();
             _scheduler.OnLog += msg => AppLog.Info(msg);
@@ -175,41 +143,24 @@ namespace BizSqNotifier
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
             if (!_realClose && e.CloseReason == CloseReason.UserClosing)
-            {
-                e.Cancel = true;
-                this.Hide();
-                this.ShowInTaskbar = false;
-                ShowBalloon("트레이에서 계속 실행 중입니다.", ToolTipIcon.Info);
-                return;
-            }
-
-            _refreshTimer.Stop();
-            _refreshTimer.Dispose();
-            _scheduler.Stop();
-            _scheduler.Dispose();
-            _trayIcon.Visible = false;
-            _trayIcon.Dispose();
+            { e.Cancel = true; this.Hide(); this.ShowInTaskbar = false; ShowBalloon("트레이에서 실행 중", ToolTipIcon.Info); return; }
+            _refreshTimer.Stop(); _refreshTimer.Dispose();
+            _scheduler.Stop(); _scheduler.Dispose();
+            _trayIcon.Visible = false; _trayIcon.Dispose();
         }
 
         private void OnFormResize(object sender, EventArgs e)
-        {
-            if (this.WindowState == FormWindowState.Minimized)
-            {
-                this.Hide();
-                this.ShowInTaskbar = false;
-            }
-        }
+        { if (this.WindowState == FormWindowState.Minimized) { this.Hide(); this.ShowInTaskbar = false; } }
 
         #endregion
 
-        #region 대시보드 갱신
+        #region 대시보드
 
         private void SafeRefreshDashboard()
         {
             lblLastUpdate.Text = "갱신 중...";
             lblLastUpdate.ForeColor = Color.Gray;
             Application.DoEvents();
-
             try
             {
                 RefreshSummaryCards();
@@ -227,25 +178,19 @@ namespace BizSqNotifier
 
         private void RefreshSummaryCards()
         {
-            var todaySummary = _logRepo.GetTodaySummary();
-            int totalSuccess = 0, totalFail = 0;
-            foreach (var kv in todaySummary)
-            {
-                totalSuccess += kv.Value.Success;
-                totalFail += kv.Value.Fail;
-            }
-            lblCardSendCount.Text = totalSuccess.ToString();
-            lblCardSendSub.Text = totalFail > 0 ? $"실패 {totalFail}건" : "정상";
-            lblCardSendSub.ForeColor = totalFail > 0
-                ? Color.FromArgb(231, 76, 60) : Color.FromArgb(39, 174, 96);
+            var summary = _logRepo.GetTodaySummary();
+            int tS = 0, tF = 0;
+            foreach (var kv in summary) { tS += kv.Value.Success; tF += kv.Value.Fail; }
+            lblCardSendCount.Text = tS.ToString();
+            lblCardSendSub.Text = tF > 0 ? $"실패 {tF}건" : "정상";
+            lblCardSendSub.ForeColor = tF > 0 ? Color.FromArgb(231, 76, 60) : Color.FromArgb(39, 174, 96);
 
             try
             {
                 var list = new UnpaidService().GetUnpaidTargets(UserSettings.Current.Unpaid1stDays);
                 lblCardUnpaidCount.Text = list.Count.ToString();
                 lblCardUnpaidSub.Text = list.Count > 0 ? "조속히 처리 필요" : "미납 없음";
-                lblCardUnpaidSub.ForeColor = list.Count > 0
-                    ? Color.FromArgb(211, 84, 0) : Color.FromArgb(39, 174, 96);
+                lblCardUnpaidSub.ForeColor = list.Count > 0 ? Color.FromArgb(211, 84, 0) : Color.FromArgb(39, 174, 96);
             }
             catch { lblCardUnpaidCount.Text = "-"; lblCardUnpaidSub.Text = "조회 실패"; lblCardUnpaidSub.ForeColor = Color.Red; }
 
@@ -254,52 +199,54 @@ namespace BizSqNotifier
                 var list = new RenewalManualService().GetRenewalTargets(UserSettings.Current.RenewalManualDays);
                 lblCardRenewalCount.Text = list.Count.ToString();
                 lblCardRenewalSub.Text = list.Count > 0 ? "갱신 안내 필요" : "예정 없음";
-                lblCardRenewalSub.ForeColor = list.Count > 0
-                    ? Color.FromArgb(41, 128, 185) : Color.FromArgb(127, 140, 141);
+                lblCardRenewalSub.ForeColor = list.Count > 0 ? Color.FromArgb(41, 128, 185) : Color.FromArgb(127, 140, 141);
             }
             catch { lblCardRenewalCount.Text = "-"; lblCardRenewalSub.Text = "조회 실패"; lblCardRenewalSub.ForeColor = Color.Red; }
 
             try
             {
-                var svc = new MoveOutService();
-                int cnt = svc.GetTargetsInRange(0, 7).Count;
+                // 7일 이내 퇴실 건 — 범위 조회로 개선
+                var cnt = GetMoveOutCountWithin7Days();
                 lblCardMoveOutCount.Text = cnt.ToString();
                 lblCardMoveOutSub.Text = cnt > 0 ? "7일 이내" : "예정 없음";
-                lblCardMoveOutSub.ForeColor = cnt > 0
-                    ? Color.FromArgb(142, 68, 173) : Color.FromArgb(127, 140, 141);
+                lblCardMoveOutSub.ForeColor = cnt > 0 ? Color.FromArgb(142, 68, 173) : Color.FromArgb(127, 140, 141);
             }
             catch { lblCardMoveOutCount.Text = "-"; lblCardMoveOutSub.Text = "조회 실패"; lblCardMoveOutSub.ForeColor = Color.Red; }
         }
 
+        /// <summary>7일 이내 퇴실 건수 — 단일 쿼리로 조회 (성능 개선).</summary>
+        private int GetMoveOutCountWithin7Days()
+        {
+            const string sql = @"
+SELECT COUNT(*) FROM dbo.tb_movein
+WHERE date_out IS NOT NULL AND date_out <> ''
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(date_out AS DATE)) BETWEEN 0 AND 7;";
+            var r = DbManager.ExecuteScalar(sql);
+            return Convert.ToInt32(r);
+        }
+
         private void RefreshTodayGrid()
         {
-            var todaySummary = _logRepo.GetTodaySummary();
+            var summary = _logRepo.GetTodaySummary();
             dgvToday.Rows.Clear();
 
             var types = new[] {
                 MailTypes.MoveIn, MailTypes.Unpaid1st, MailTypes.Unpaid2nd,
                 MailTypes.UnpaidFinal, MailTypes.RenewalManual,
-                MailTypes.RenewalAuto, MailTypes.MoveOut
-            };
-
+                MailTypes.RenewalAuto, MailTypes.MoveOut };
             var labels = new Dictionary<string, string>
             {
-                [MailTypes.MoveIn] = "입주 안내",
-                [MailTypes.Unpaid1st] = "미납 1차",
-                [MailTypes.Unpaid2nd] = "미납 2차",
-                [MailTypes.UnpaidFinal] = "미납 최종",
-                [MailTypes.RenewalManual] = "갱신 수동",
-                [MailTypes.RenewalAuto] = "갱신 자동",
+                [MailTypes.MoveIn] = "입주 안내", [MailTypes.Unpaid1st] = "미납 1차",
+                [MailTypes.Unpaid2nd] = "미납 2차", [MailTypes.UnpaidFinal] = "미납 최종",
+                [MailTypes.RenewalManual] = "갱신 수동", [MailTypes.RenewalAuto] = "갱신 자동",
                 [MailTypes.MoveOut] = "퇴실 안내"
             };
 
-            foreach (var type in types)
+            foreach (var t in types)
             {
                 int s = 0, f = 0, sk = 0;
-                if (todaySummary.ContainsKey(type))
-                { s = todaySummary[type].Success; f = todaySummary[type].Fail; sk = todaySummary[type].Skip; }
-
-                var ri = dgvToday.Rows.Add(labels.ContainsKey(type) ? labels[type] : type, s, f, sk, s + f + sk);
+                if (summary.ContainsKey(t)) { s = summary[t].Success; f = summary[t].Fail; sk = summary[t].Skip; }
+                var ri = dgvToday.Rows.Add(labels.ContainsKey(t) ? labels[t] : t, s, f, sk, s + f + sk);
                 if (f > 0)
                 {
                     dgvToday.Rows[ri].Cells["colFail"].Style.ForeColor = Color.FromArgb(231, 76, 60);
@@ -310,22 +257,14 @@ namespace BizSqNotifier
 
         #endregion
 
-        #region 폼 열기 헬퍼
+        #region 폼 헬퍼
 
         private void OpenForm<T>() where T : Form, new()
-        {
-            using (var f = new T()) { f.ShowDialog(this); }
-            SafeRefreshDashboard();
-        }
+        { using (var f = new T()) f.ShowDialog(this); SafeRefreshDashboard(); }
 
         private void OpenSettings()
-        {
-            using (var f = new SettingsForm()) { f.ShowDialog(this); }
-            UserSettings.Reload();
-            SafeRefreshDashboard();
-        }
+        { using (var f = new SettingsForm()) f.ShowDialog(this); UserSettings.Reload(); SafeRefreshDashboard(); }
 
         #endregion
     }
 }
-

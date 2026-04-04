@@ -8,9 +8,16 @@ using BizSqNotifier.Models;
 namespace BizSqNotifier.Services
 {
     /// <summary>
-    /// 미납 안내 메일 자동 발송 서비스 (1차 / 2차 / 최종).
-    /// 발송 시각: 13:00 KST (스케줄러에서 호출)
-    /// 3차(최종) 이후 중단 — 이후 내용증명은 오프라인 처리
+    /// 미납 안내 메일 자동 발송 서비스 (1차/2차/최종).
+    ///
+    /// 실제 DB 컬럼 확정:
+    ///   tb_invoice.send_yn (varchar) = 발송완료 여부 ('1' = 발송됨)
+    ///   tb_invoice.dep_yn (int)      = 입금 여부 (0=미납, 1=납부)
+    ///   tb_invoice.date_pay (varchar) = 납부일 'yyyy-MM-dd'
+    ///   tb_invoice.mi_id             = tb_movein.id FK
+    ///   tb_inv_list.iv_id            = tb_invoice.id FK
+    ///
+    /// 발송 시각: 13:00 KST
     /// </summary>
     public sealed class UnpaidService
     {
@@ -25,80 +32,64 @@ namespace BizSqNotifier.Services
             _template = new TemplateEngine();
         }
 
-        #region 미납 대상 조회 SQL
-
-        // [ESTIMATED] tb_invoice.chk_send / chk_paid 컬럼명 추정
-        // 실제 DB 확인 후 조정 필요
+        #region SQL
 
         private const string SelectUnpaidSql = @"
 SELECT
-    m.movein_id,
-    i.invoice_id,
-    m.cust                      AS cust_name,
-    c.email                     AS email,
-    m.br_id                     AS branch_id,
+    i.mi_id                     AS movein_id,
+    i.id                        AS invoice_id,
+    i.br_code,
+    i.cust                      AS cust_name,
+    c.email,
     b.br_name                   AS branch_name,
     b.bank_accnt                AS bank_account,
-    b.bank_holder               AS bank_holder,
-    m.prd_prd                   AS product_name,
-    m.off_num                   AS office_num,
+    b.bank_holder,
+    i.prd_prd                   AS product_name,
+    i.off_num                   AS office_num,
     ISNULL(inv_sum.total_amt, 0) AS total_amount,
     i.date_pay,
-    DATEDIFF(DAY, i.date_pay, GETDATE()) AS days_overdue
+    DATEDIFF(DAY, TRY_CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) AS days_overdue
 FROM dbo.tb_invoice i
-    INNER JOIN dbo.tb_movein    m ON i.movein_id = m.movein_id
-    LEFT  JOIN dbo.tb_customer  c ON m.cust_id   = c.cust_id
-    LEFT  JOIN dbo.tb_branch    b ON m.br_id     = b.br_id
-    LEFT  JOIN (
-        SELECT invoice_id,
+    LEFT JOIN dbo.tb_customer c ON i.cu_id    = c.id
+    LEFT JOIN dbo.tb_branch   b ON i.br_code  = b.br_code
+    LEFT JOIN (
+        SELECT iv_id,
                SUM(ISNULL(price, 0) + ISNULL(tax, 0)) AS total_amt
         FROM dbo.tb_inv_list
-        GROUP BY invoice_id
-    ) inv_sum ON i.invoice_id = inv_sum.invoice_id
-WHERE i.chk_send = 1
-  AND i.chk_paid = 0
-  AND DATEDIFF(DAY, i.date_pay, GETDATE()) >= @minDays
-ORDER BY m.movein_id, i.invoice_id;";
+        GROUP BY iv_id
+    ) inv_sum ON i.id = inv_sum.iv_id
+WHERE i.send_yn = '1'
+  AND i.dep_yn  = 0
+  AND i.date_pay IS NOT NULL
+  AND i.date_pay <> ''
+  AND DATEDIFF(DAY, TRY_CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) >= @minDays
+ORDER BY i.mi_id, i.id;";
 
         #endregion
 
-        #region 전체 자동 발송
+        #region 전체 처리 (UserSettings 기준일 반영)
 
-        /// <summary>
-        /// UserSettings 기준일로 미납 1차/2차/최종 전체 처리.
-        /// 스케줄러에서 13:00에 호출.
-        /// </summary>
+        /// <summary>미납 1차/2차/최종 전체를 UserSettings 기준일로 처리.</summary>
         public Dictionary<string, (int Total, int Success, int Fail, int Skip)> ProcessAll()
         {
             var s = UserSettings.Current;
             return ProcessAll(s.Unpaid1stDays, s.Unpaid2ndDays, s.UnpaidFinalDays);
         }
 
-        /// <summary>
-        /// 지정된 기준일로 미납 1차/2차/최종 전체 처리.
-        /// </summary>
+        /// <summary>기준일 명시 오버로드.</summary>
         public Dictionary<string, (int Total, int Success, int Fail, int Skip)> ProcessAll(
             int days1st, int days2nd, int daysFinal)
         {
             var results = new Dictionary<string, (int, int, int, int)>();
 
             results[MailTypes.Unpaid1st] = ProcessStage(
-                mailType: MailTypes.Unpaid1st,
-                templateFile: TemplateFiles.Unpaid1st,
-                minDays: days1st,
-                deadlineOffset: days1st + 4);
+                MailTypes.Unpaid1st, TemplateFiles.Unpaid1st, days1st, days1st + 4);
 
             results[MailTypes.Unpaid2nd] = ProcessStage(
-                mailType: MailTypes.Unpaid2nd,
-                templateFile: TemplateFiles.Unpaid2nd,
-                minDays: days2nd,
-                deadlineOffset: days2nd + 3);
+                MailTypes.Unpaid2nd, TemplateFiles.Unpaid2nd, days2nd, days2nd + 3);
 
             results[MailTypes.UnpaidFinal] = ProcessStage(
-                mailType: MailTypes.UnpaidFinal,
-                templateFile: TemplateFiles.UnpaidFinal,
-                minDays: daysFinal,
-                deadlineOffset: daysFinal + 3);
+                MailTypes.UnpaidFinal, TemplateFiles.UnpaidFinal, daysFinal, daysFinal + 3);
 
             return results;
         }
@@ -112,69 +103,46 @@ ORDER BY m.movein_id, i.invoice_id;";
         {
             var targets = GetUnpaidTargets(minDays);
             int success = 0, fail = 0, skip = 0;
-
-            AppLog.Info($"[{mailType}] 대상 {targets.Count}건 조회됨 (경과일>={minDays})");
+            AppLog.Info($"[{mailType}] 대상 {targets.Count}건 (>={minDays}일)");
 
             foreach (var info in targets)
             {
                 try
                 {
-                    var result = ProcessOne(info, mailType, templateFile, deadlineOffset);
-                    switch (result.Status)
-                    {
-                        case "성공": success++; break;
-                        case "SKIP": skip++; break;
-                        default: fail++; break;
-                    }
+                    var r = ProcessOne(info, mailType, templateFile, deadlineOffset);
+                    switch (r.Status) { case "성공": success++; break; case "SKIP": skip++; break; default: fail++; break; }
                 }
-                catch (Exception ex)
-                {
-                    fail++;
-                    AppLog.Error($"[{mailType}] 개별 처리 오류 — InvoiceId={info.InvoiceId}", ex);
-                }
+                catch (Exception ex) { fail++; AppLog.Error($"[{mailType}] 오류 InvoiceId={info.InvoiceId}", ex); }
             }
 
-            AppLog.Info($"[{mailType}] 처리 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}");
+            AppLog.Info($"[{mailType}] 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}");
             return (targets.Count, success, fail, skip);
         }
 
         #endregion
 
-        #region 개별 발송
+        #region 개별 처리
 
-        public SendResult ProcessOne(
-            UnpaidInfo info, string mailType, string templateFile, int deadlineOffset)
+        public SendResult ProcessOne(UnpaidInfo info, string mailType, string templateFile, int deadlineOffset)
         {
-            if (info == null) return SendResult.Fail("UnpaidInfo가 null입니다.");
+            if (info == null) return SendResult.Fail("UnpaidInfo null");
 
             if (_logRepo.HasSentByInvoice(mailType, info.InvoiceId))
-            {
-                AppLog.Info($"[{mailType}] 이미 발송됨 — InvoiceId={info.InvoiceId}, {info.CustName}");
                 return SendResult.Skip("이미 발송 완료");
-            }
 
             if (string.IsNullOrWhiteSpace(info.Email))
-            {
-                var skipResult = SendResult.Skip("이메일 미등록");
-                LogResult(info, mailType, skipResult);
-                return skipResult;
-            }
+            { var s = SendResult.Skip("이메일 미등록"); LogResult(info, mailType, s); return s; }
 
             var tokens = BuildTokens(info, deadlineOffset);
-            var subjectTemplate = TemplateEngine.GetDefaultSubject(mailType);
-            var subject = _template.RenderSubject(subjectTemplate, tokens);
+            var subject = _template.RenderSubject(TemplateEngine.GetDefaultSubject(mailType), tokens);
             var body = _template.LoadAndRender(templateFile, tokens);
 
             if (string.IsNullOrEmpty(body))
-            {
-                var failResult = SendResult.Fail("템플릿 로드 실패: " + templateFile);
-                LogResult(info, mailType, failResult);
-                return failResult;
-            }
+            { var f = SendResult.Fail("템플릿 로드 실패"); LogResult(info, mailType, f); return f; }
 
-            var sendResult = _smtp.SendByBranch(info.BranchId ?? 0, info.Email, subject, body);
-            LogResult(info, mailType, sendResult);
-            return sendResult;
+            var result = _smtp.SendByBranch(info.BranchCode, info.Email, subject, body);
+            LogResult(info, mailType, result);
+            return result;
         }
 
         #endregion
@@ -188,76 +156,69 @@ ORDER BY m.movein_id, i.invoice_id;";
                 return DbManager.ExecuteReader(SelectUnpaidSql, MapRow,
                     new SqlParameter("@minDays", minDays));
             }
-            catch (Exception ex)
-            {
-                AppLog.Error($"미납 대상 조회 실패 (minDays={minDays})", ex);
-                return new List<UnpaidInfo>();
-            }
+            catch (Exception ex) { AppLog.Error($"미납 대상 조회 실패 (minDays={minDays})", ex); return new List<UnpaidInfo>(); }
         }
 
         #endregion
 
-        #region 치환 토큰
+        #region 토큰
 
         private static Dictionary<string, string> BuildTokens(UnpaidInfo info, int deadlineOffset)
         {
-            var deadline = info.DatePay.AddDays(deadlineOffset);
+            // 납부기한 = date_pay + deadlineOffset일
+            string deadline = "";
+            if (DateTime.TryParse(info.DatePay, out var dp))
+                deadline = dp.AddDays(deadlineOffset).ToString("yyyy-MM-dd");
+
             return new Dictionary<string, string>
             {
-                ["회사명"]       = info.CustName ?? string.Empty,
-                ["지점"]         = info.BranchName ?? string.Empty,
-                ["상품/분류"]    = info.ProductName ?? string.Empty,
-                ["호실"]         = info.OfficeNum ?? string.Empty,
-                ["합계금액"]     = info.TotalAmount.ToString("#,0") + "원",
-                ["납부기한"]     = deadline.ToString("yyyy-MM-dd"),
-                ["최종납부기한"] = deadline.ToString("yyyy-MM-dd"),
-                ["납부계좌"]     = info.BankAccount ?? string.Empty,
-                ["예금주"]       = info.BankHolder ?? string.Empty
+                ["회사명"]    = info.CustName ?? "",
+                ["지점"]      = info.BranchName ?? "",
+                ["상품/분류"] = info.ProductName ?? "",
+                ["호실"]      = info.OfficeNum ?? "",
+                ["합계금액"]  = info.TotalAmount.ToString("#,0") + "원",
+                ["납부기한"]  = deadline,
+                ["납부계좌"]  = info.BankAccount ?? "",
+                ["예금주"]    = info.BankHolder ?? ""
             };
         }
 
         #endregion
 
-        #region 로그 기록
+        #region 로그
 
         private void LogResult(UnpaidInfo info, string mailType, SendResult result)
         {
             try
             {
-                var entry = MailLogEntry.Create(
-                    mailType: mailType, moveInId: info.MoveInId,
-                    custName: info.CustName, email: info.Email,
-                    branchId: info.BranchId, result: result,
-                    invoiceId: info.InvoiceId);
-                _logRepo.Insert(entry);
+                _logRepo.Insert(MailLogEntry.Create(
+                    mailType, info.MoveInId, info.CustName,
+                    info.Email, info.BranchCode, result, info.InvoiceId));
             }
-            catch (Exception ex)
-            {
-                AppLog.Error($"[{mailType}] 로그 기록 실패 — InvoiceId={info.InvoiceId}", ex);
-            }
+            catch (Exception ex) { AppLog.Error($"[{mailType}] 로그 실패 InvoiceId={info.InvoiceId}", ex); }
         }
 
         #endregion
 
-        #region Row Mapper
+        #region Mapper
 
-        private static UnpaidInfo MapRow(SqlDataReader reader)
+        private static UnpaidInfo MapRow(SqlDataReader r)
         {
             return new UnpaidInfo
             {
-                MoveInId    = DbManager.GetSafeInt(reader, "movein_id"),
-                InvoiceId   = DbManager.GetSafeInt(reader, "invoice_id"),
-                CustName    = DbManager.GetSafeString(reader, "cust_name"),
-                Email       = DbManager.GetSafeString(reader, "email"),
-                BranchId    = DbManager.GetSafeNullableInt(reader, "branch_id"),
-                BranchName  = DbManager.GetSafeString(reader, "branch_name"),
-                BankAccount = DbManager.GetSafeString(reader, "bank_account"),
-                BankHolder  = DbManager.GetSafeString(reader, "bank_holder"),
-                ProductName = DbManager.GetSafeString(reader, "product_name"),
-                OfficeNum   = DbManager.GetSafeString(reader, "office_num"),
-                TotalAmount = DbManager.GetSafeDecimal(reader, "total_amount"),
-                DatePay     = DbManager.GetSafeDateTimeValue(reader, "date_pay", DateTime.Today),
-                DaysOverdue = DbManager.GetSafeInt(reader, "days_overdue")
+                MoveInId    = DbManager.GetSafeInt(r, "movein_id"),
+                InvoiceId   = DbManager.GetSafeInt(r, "invoice_id"),
+                BranchCode  = DbManager.GetSafeString(r, "br_code"),
+                CustName    = DbManager.GetSafeString(r, "cust_name"),
+                Email       = DbManager.GetSafeString(r, "email"),
+                BranchName  = DbManager.GetSafeString(r, "branch_name"),
+                BankAccount = DbManager.GetSafeString(r, "bank_account"),
+                BankHolder  = DbManager.GetSafeString(r, "bank_holder"),
+                ProductName = DbManager.GetSafeString(r, "product_name"),
+                OfficeNum   = DbManager.GetSafeString(r, "office_num"),
+                TotalAmount = DbManager.GetSafeInt(r, "total_amount"),
+                DatePay     = DbManager.GetSafeString(r, "date_pay"),
+                DaysOverdue = DbManager.GetSafeInt(r, "days_overdue")
             };
         }
 
