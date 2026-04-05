@@ -372,3 +372,6 @@ App.config
 
 # 운영 연결 문자열 보호
 **/App.config
+
+# DB 연결 정보 보안
+BizSqNotifier/App.config
