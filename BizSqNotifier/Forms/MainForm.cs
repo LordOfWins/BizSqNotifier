@@ -220,7 +220,8 @@ namespace BizSqNotifier
             const string sql = @"
 SELECT COUNT(*) FROM dbo.tb_movein
 WHERE date_out IS NOT NULL AND date_out <> ''
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(date_out AS DATE)) BETWEEN 0 AND 7;";
+  AND ISDATE(date_out) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(date_out AS DATE)) BETWEEN 0 AND 7;";
             var r = DbManager.ExecuteScalar(sql);
             return Convert.ToInt32(r);
         }

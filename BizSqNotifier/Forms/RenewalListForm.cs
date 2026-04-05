@@ -91,32 +91,34 @@ SELECT
     m.prd_prd AS product_name, m.off_num AS office_num,
     ISNULL(m.deposit, 0) AS deposit, ISNULL(m.price, 0) AS price,
     m.date_from, m.date_to, m.date_out,
-    DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(m.date_to AS DATE)) AS days_until_expiry
+    DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_to AS DATE)) AS days_until_expiry
 FROM dbo.tb_movein m
     LEFT JOIN dbo.tb_customer c ON m.cu_id = c.id
     LEFT JOIN dbo.tb_branch b ON m.br_code = b.br_code
 WHERE m.date_to IS NOT NULL AND m.date_to <> ''
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(m.date_to AS DATE)) BETWEEN 0 AND @maxDays
+  AND ISDATE(m.date_to) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_to AS DATE)) BETWEEN 0 AND @maxDays
   AND m.prd_prd NOT LIKE '%인실'
-  AND (m.date_out IS NULL OR m.date_out = '' OR TRY_CAST(m.date_out AS DATE) >= TRY_CAST(m.date_to AS DATE))
+  AND (m.date_out IS NULL OR m.date_out = ''
+       OR (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) >= CAST(m.date_to AS DATE)))
 ORDER BY m.date_to ASC, m.cust;";
 
             return DbManager.ExecuteReader(sql, r => new RenewalInfo
             {
-                MoveInId        = DbManager.GetSafeInt(r, "movein_id"),
-                BranchCode      = DbManager.GetSafeString(r, "br_code"),
-                CustName        = DbManager.GetSafeString(r, "cust_name"),
-                Email           = DbManager.GetSafeString(r, "email"),
-                BranchName      = DbManager.GetSafeString(r, "branch_name"),
-                BankAccount     = DbManager.GetSafeString(r, "bank_account"),
-                BankHolder      = DbManager.GetSafeString(r, "bank_holder"),
-                ProductName     = DbManager.GetSafeString(r, "product_name"),
-                OfficeNum       = DbManager.GetSafeString(r, "office_num"),
-                Deposit         = DbManager.GetSafeInt(r, "deposit"),
-                Price           = DbManager.GetSafeInt(r, "price"),
-                DateFrom        = DbManager.GetSafeString(r, "date_from"),
-                DateTo          = DbManager.GetSafeString(r, "date_to"),
-                DateOut         = DbManager.GetSafeString(r, "date_out"),
+                MoveInId = DbManager.GetSafeInt(r, "movein_id"),
+                BranchCode = DbManager.GetSafeString(r, "br_code"),
+                CustName = DbManager.GetSafeString(r, "cust_name"),
+                Email = DbManager.GetSafeString(r, "email"),
+                BranchName = DbManager.GetSafeString(r, "branch_name"),
+                BankAccount = DbManager.GetSafeString(r, "bank_account"),
+                BankHolder = DbManager.GetSafeString(r, "bank_holder"),
+                ProductName = DbManager.GetSafeString(r, "product_name"),
+                OfficeNum = DbManager.GetSafeString(r, "office_num"),
+                Deposit = DbManager.GetSafeInt(r, "deposit"),
+                Price = DbManager.GetSafeInt(r, "price"),
+                DateFrom = DbManager.GetSafeString(r, "date_from"),
+                DateTo = DbManager.GetSafeString(r, "date_to"),
+                DateOut = DbManager.GetSafeString(r, "date_out"),
                 DaysUntilExpiry = DbManager.GetSafeInt(r, "days_until_expiry")
             }, new SqlParameter("@maxDays", maxDays));
         }

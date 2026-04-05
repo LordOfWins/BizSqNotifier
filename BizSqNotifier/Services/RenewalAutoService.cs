@@ -46,15 +46,17 @@ SELECT
     m.date_from,
     m.date_to,
     m.date_out,
-    DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(m.date_to AS DATE)) AS days_until_expiry
+    DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_to AS DATE)) AS days_until_expiry
 FROM dbo.tb_movein m
     LEFT JOIN dbo.tb_customer c ON m.cu_id   = c.id
     LEFT JOIN dbo.tb_branch   b ON m.br_code = b.br_code
 WHERE m.date_to IS NOT NULL
   AND m.date_to <> ''
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(m.date_to AS DATE)) = @daysBefore
+  AND ISDATE(m.date_to) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_to AS DATE)) = @daysBefore
   AND m.prd_prd NOT LIKE '%인실'
-  AND (m.date_out IS NULL OR m.date_out = '' OR TRY_CAST(m.date_out AS DATE) >= TRY_CAST(m.date_to AS DATE))
+  AND (m.date_out IS NULL OR m.date_out = ''
+       OR (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) >= CAST(m.date_to AS DATE)))
 ORDER BY m.date_to ASC, m.cust;";
 
         #endregion

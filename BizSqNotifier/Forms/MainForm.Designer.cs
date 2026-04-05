@@ -309,7 +309,7 @@ namespace BizSqNotifier
             card.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             card.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
 
-            // 좌측 색상 바 효과 (Panel 안에 작은 Panel)
+            // 좌측 색상 바 효과
             var bar = new System.Windows.Forms.Panel
             {
                 Location = new Point(0, 0),
@@ -318,23 +318,30 @@ namespace BizSqNotifier
             };
             card.Controls.Add(bar);
 
+            // 타이틀 (상단)
             titleLbl.AutoSize = true;
             titleLbl.Font = new Font("맑은 고딕", 9F);
             titleLbl.ForeColor = Color.FromArgb(127, 140, 141);
-            titleLbl.Location = new Point(14, 10);
+            titleLbl.Location = new Point(14, 8);
             titleLbl.Text = title;
 
-            countLbl.AutoSize = true;
-            countLbl.Font = new Font("맑은 고딕", 22F, FontStyle.Bold);
+            // 숫자 (중앙) — 폰트 축소 + 고정 영역
+            countLbl.AutoSize = false;
+            countLbl.Font = new Font("맑은 고딕", 18F, FontStyle.Bold);
             countLbl.ForeColor = accentColor;
-            countLbl.Location = new Point(14, 30);
+            countLbl.Location = new Point(14, 26);
+            countLbl.Size = new Size(w - 30, 30);
             countLbl.Text = "-";
+            countLbl.TextAlign = ContentAlignment.MiddleLeft;
 
-            subLbl.AutoSize = true;
+            // 서브 텍스트 (하단) — 고정 위치
+            subLbl.AutoSize = false;
             subLbl.Font = new Font("맑은 고딕", 8.5F);
             subLbl.ForeColor = Color.FromArgb(149, 165, 166);
-            subLbl.Location = new Point(14, 66);
+            subLbl.Location = new Point(14, 60);
+            subLbl.Size = new Size(w - 30, 20);
             subLbl.Text = "";
+            subLbl.TextAlign = ContentAlignment.MiddleLeft;
 
             card.Controls.Add(titleLbl);
             card.Controls.Add(countLbl);

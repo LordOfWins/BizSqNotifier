@@ -40,13 +40,14 @@ SELECT
     ISNULL(m.deposit, 0)    AS deposit,
     m.date_to,
     m.date_out,
-    DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(m.date_out AS DATE)) AS days_until_moveout
+    DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) AS days_until_moveout
 FROM dbo.tb_movein m
     LEFT JOIN dbo.tb_customer c ON m.cu_id   = c.id
     LEFT JOIN dbo.tb_branch   b ON m.br_code = b.br_code
 WHERE m.date_out IS NOT NULL
   AND m.date_out <> ''
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), TRY_CAST(m.date_out AS DATE)) = @daysBefore
+  AND ISDATE(m.date_out) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) = @daysBefore
 ORDER BY m.date_out ASC, m.cust;";
 
         #endregion

@@ -36,33 +36,39 @@ namespace BizSqNotifier.Services
 
         private const string SelectUnpaidSql = @"
 SELECT
-    i.mi_id                     AS movein_id,
-    i.id                        AS invoice_id,
+    i.mi_id                      AS movein_id,
+    i.id                         AS invoice_id,
     i.br_code,
-    i.cust                      AS cust_name,
+    i.cust                       AS cust_name,
     c.email,
-    b.br_name                   AS branch_name,
-    b.bank_accnt                AS bank_account,
+    b.br_name                    AS branch_name,
+    b.bank_accnt                 AS bank_account,
     b.bank_holder,
-    i.prd_prd                   AS product_name,
-    i.off_num                   AS office_num,
+    i.prd_prd                    AS product_name,
+    i.off_num                    AS office_num,
     ISNULL(inv_sum.total_amt, 0) AS total_amount,
     i.date_pay,
-    DATEDIFF(DAY, TRY_CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) AS days_overdue
+    DATEDIFF(DAY, CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) AS days_overdue
 FROM dbo.tb_invoice i
-    LEFT JOIN dbo.tb_customer c ON i.cu_id    = c.id
-    LEFT JOIN dbo.tb_branch   b ON i.br_code  = b.br_code
+    LEFT JOIN dbo.tb_customer c  ON i.cu_id   = c.id
+    LEFT JOIN dbo.tb_branch   b  ON i.br_code = b.br_code
+    LEFT JOIN dbo.tb_movein   m  ON i.mi_id   = m.id
     LEFT JOIN (
         SELECT iv_id,
                SUM(ISNULL(price, 0) + ISNULL(tax, 0)) AS total_amt
         FROM dbo.tb_inv_list
         GROUP BY iv_id
     ) inv_sum ON i.id = inv_sum.iv_id
-WHERE i.send_yn = '1'
+WHERE i.send_yn = 'Y'
   AND i.dep_yn  = 0
   AND i.date_pay IS NOT NULL
   AND i.date_pay <> ''
-  AND DATEDIFF(DAY, TRY_CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) >= @minDays
+  AND ISDATE(i.date_pay) = 1
+  AND CAST(i.date_pay AS DATE) < CAST(GETDATE() AS DATE)
+  AND DATEDIFF(DAY, CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) >= @minDays
+  AND DATEDIFF(DAY, CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) <= 90
+  AND (m.date_out IS NULL OR m.date_out = ''
+       OR (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) >= CAST(GETDATE() AS DATE)))
 ORDER BY i.mi_id, i.id;";
 
         #endregion
