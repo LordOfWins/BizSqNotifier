@@ -103,6 +103,7 @@
     <Compile Include="Services\SchedulerService.cs" />
     <Compile Include="Services\TaskSchedulerHelper.cs" />
     <Compile Include="Services\AutoSendRunner.cs" />
+    <Compile Include="Services\SmtpDiagnostic.cs" />
 
     <!-- Forms -->
     <Compile Include="Forms\LoginForm.cs">
