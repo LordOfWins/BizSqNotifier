@@ -88,7 +88,6 @@
     <Compile Include="Models\UnpaidInfo.cs" />
     <Compile Include="Models\RenewalInfo.cs" />
     <Compile Include="Models\MoveOutInfo.cs" />
-    <Compile Include="Models\SmtpSettings.cs" />
     <Compile Include="Models\MailLogEntry.cs" />
     <Compile Include="Models\BranchSmtpInfo.cs" />
     <Compile Include="Models\SendResult.cs" />

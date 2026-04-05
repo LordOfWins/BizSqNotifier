@@ -367,3 +367,8 @@ DocumentLayout.json
 VSWorkspaceState.json
 slnx.sqlite
 BizSqNotifier/App.config
+BizSqNotifier/App.config
+App.config
+
+# 운영 연결 문자열 보호
+**/App.config

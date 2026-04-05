@@ -11,7 +11,7 @@ namespace BizSqNotifier.Services
     /// 미납 안내 메일 자동 발송 서비스 (1차/2차/최종).
     ///
     /// 실제 DB 컬럼 확정:
-    ///   tb_invoice.send_yn (varchar) = 발송완료 여부 ('1' = 발송됨)
+    ///    tb_invoice.send_yn (varchar) = 발송완료 여부 ('Y' = 발송됨)
     ///   tb_invoice.dep_yn (int)      = 입금 여부 (0=미납, 1=납부)
     ///   tb_invoice.date_pay (varchar) = 납부일 'yyyy-MM-dd'
     ///   tb_invoice.mi_id             = tb_movein.id FK

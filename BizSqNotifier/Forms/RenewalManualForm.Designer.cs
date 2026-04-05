@@ -23,6 +23,17 @@ namespace BizSqNotifier
             this.btnRefresh = new System.Windows.Forms.Button();
             this.dgvTargets = new System.Windows.Forms.DataGridView();
 
+            // dgvTargets 컬럼 정의
+            this.dgvTargets.Columns.Add("colCust", "회사명");
+            this.dgvTargets.Columns.Add("colBranch", "지점");
+            this.dgvTargets.Columns.Add("colProduct", "상품/분류");
+            this.dgvTargets.Columns.Add("colRoom", "호실");
+            this.dgvTargets.Columns.Add("colDateTo", "계약종료일");
+            this.dgvTargets.Columns.Add("colDays", "남은일수");
+            this.dgvTargets.Columns.Add("colDeposit", "예치금");
+            this.dgvTargets.Columns.Add("colPrice", "이용료");
+            this.dgvTargets.Columns.Add("colEmail", "이메일");
+
             // ── 하단 패널: 수기 입력 + 발송 ──
             this.panelDetail = new System.Windows.Forms.Panel();
             this.lblSelected = new System.Windows.Forms.Label();
@@ -128,6 +139,17 @@ namespace BizSqNotifier
             };
             this.dgvTargets.EnableHeadersVisualStyles = false;
             this.dgvTargets.Name = "dgvTargets";
+
+            // 컬럼 정의
+            this.dgvTargets.Columns.Add("colCust", "회사명");
+            this.dgvTargets.Columns.Add("colBranch", "지점");
+            this.dgvTargets.Columns.Add("colProduct", "상품/분류");
+            this.dgvTargets.Columns.Add("colRoom", "호실");
+            this.dgvTargets.Columns.Add("colDateTo", "계약종료일");
+            this.dgvTargets.Columns.Add("colDays", "남은일수");
+            this.dgvTargets.Columns.Add("colDeposit", "예치금");
+            this.dgvTargets.Columns.Add("colPrice", "이용료");
+            this.dgvTargets.Columns.Add("colEmail", "이메일");
 
             // ════════════════════════════════════════
             // panelDetail (하단 수기 입력 영역)
