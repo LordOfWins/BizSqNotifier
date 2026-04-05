@@ -375,3 +375,4 @@ App.config
 
 # DB 연결 정보 보안
 BizSqNotifier/App.config
+settings.json
