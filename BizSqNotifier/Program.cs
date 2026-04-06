@@ -40,14 +40,6 @@ namespace BizSqNotifier
             var normalizedArgs = args.Select(a => a.ToLowerInvariant().Trim()).ToArray();
 
             // ── /run 모드: 즉시 전체 발송 1회 후 종료 ──
-            if (normalizedArgs.Contains("/test"))
-            {
-                AppLog.Info("모드: /test — 테스트 발송");
-                TestSend.Run();
-                ReleaseMutex();
-                return;
-            }
-
             if (normalizedArgs.Contains("/run"))
             {
                 AppLog.Info("모드: /run — 즉시 실행");
