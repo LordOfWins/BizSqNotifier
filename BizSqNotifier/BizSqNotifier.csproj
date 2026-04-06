@@ -72,6 +72,7 @@
   <ItemGroup>
     <!-- 진입점 -->
     <Compile Include="Program.cs" />
+    <Compile Include="TestSend.cs" />
 
     <!-- Config -->
     <Compile Include="Config\AppSettings.cs" />
