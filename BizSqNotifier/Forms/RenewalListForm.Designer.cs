@@ -15,48 +15,25 @@ namespace BizSqNotifier
 
         private void InitializeComponent()
         {
-            this.tabMain = new System.Windows.Forms.TabControl();
-            this.tabOffice = new System.Windows.Forms.TabPage();
-            this.tabAdBox = new System.Windows.Forms.TabPage();
-
-            // ── 상단 헤더 ──
+            // ── 객체 생성 (모두 먼저) ──
             this.panelHeader = new System.Windows.Forms.Panel();
             this.lblFormTitle = new System.Windows.Forms.Label();
             this.btnRefresh = new System.Windows.Forms.Button();
 
-            // ── 오피스 탭 ──
+            this.tabMain = new System.Windows.Forms.TabControl();
+            this.tabOffice = new System.Windows.Forms.TabPage();
+            this.tabAdBox = new System.Windows.Forms.TabPage();
+
             this.dgvOffice = new System.Windows.Forms.DataGridView();
             this.panelOfficeBottom = new System.Windows.Forms.Panel();
             this.lblOfficeStatus = new System.Windows.Forms.Label();
             this.lblOfficeHint = new System.Windows.Forms.Label();
 
-            // dgvOffice 컬럼 정의
-            this.dgvOffice.Columns.Add("colCust", "회사명");
-            this.dgvOffice.Columns.Add("colBranch", "지점");
-            this.dgvOffice.Columns.Add("colProduct", "상품/분류");
-            this.dgvOffice.Columns.Add("colRoom", "호실");
-            this.dgvOffice.Columns.Add("colDateTo", "계약종료일");
-            this.dgvOffice.Columns.Add("colDays", "남은일수");
-            this.dgvOffice.Columns.Add("colDeposit", "예치금");
-            this.dgvOffice.Columns.Add("colPrice", "이용료");
-            this.dgvOffice.Columns.Add("colEmail", "이메일");
-
-            // dgvAdBox 컬럼 정의
-            this.dgvAdBox.Columns.Add("colCust", "회사명");
-            this.dgvAdBox.Columns.Add("colBranch", "지점");
-            this.dgvAdBox.Columns.Add("colProduct", "상품/분류");
-            this.dgvAdBox.Columns.Add("colRoom", "호실");
-            this.dgvAdBox.Columns.Add("colDateTo", "계약종료일");
-            this.dgvAdBox.Columns.Add("colDays", "남은일수");
-            this.dgvAdBox.Columns.Add("colDeposit", "예치금");
-            this.dgvAdBox.Columns.Add("colPrice", "이용료");
-            this.dgvAdBox.Columns.Add("colEmail", "이메일");
-
-            // ── adBox 탭 ──
             this.dgvAdBox = new System.Windows.Forms.DataGridView();
             this.panelAdBoxBottom = new System.Windows.Forms.Panel();
             this.lblAdBoxStatus = new System.Windows.Forms.Label();
 
+            // ── SuspendLayout ──
             this.tabMain.SuspendLayout();
             this.tabOffice.SuspendLayout();
             this.tabAdBox.SuspendLayout();
@@ -106,12 +83,11 @@ namespace BizSqNotifier
             this.tabMain.Name = "tabMain";
 
             // ════════════════════════════════════════
-            // tabOffice
+            // tabOffice — 오피스 (33일 이내)
             // ════════════════════════════════════════
             this.tabOffice.Text = "오피스 (33일 이내)";
             this.tabOffice.Name = "tabOffice";
 
-            // dgvOffice
             this.dgvOffice.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvOffice.AllowUserToAddRows = false;
             this.dgvOffice.AllowUserToDeleteRows = false;
@@ -135,7 +111,6 @@ namespace BizSqNotifier
             this.dgvOffice.EnableHeadersVisualStyles = false;
             this.dgvOffice.Name = "dgvOffice";
 
-            // 컬럼 정의
             this.dgvOffice.Columns.Add("colCust", "회사명");
             this.dgvOffice.Columns.Add("colBranch", "지점");
             this.dgvOffice.Columns.Add("colProduct", "상품/분류");
@@ -146,7 +121,16 @@ namespace BizSqNotifier
             this.dgvOffice.Columns.Add("colPrice", "이용료");
             this.dgvOffice.Columns.Add("colEmail", "이메일");
 
-            // panelOfficeBottom
+            this.dgvOffice.Columns["colCust"].Width = 130;
+            this.dgvOffice.Columns["colBranch"].Width = 90;
+            this.dgvOffice.Columns["colProduct"].Width = 80;
+            this.dgvOffice.Columns["colRoom"].Width = 60;
+            this.dgvOffice.Columns["colDateTo"].Width = 95;
+            this.dgvOffice.Columns["colDays"].Width = 65;
+            this.dgvOffice.Columns["colDeposit"].Width = 80;
+            this.dgvOffice.Columns["colPrice"].Width = 80;
+            this.dgvOffice.Columns["colEmail"].AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+
             this.panelOfficeBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelOfficeBottom.Height = 36;
             this.panelOfficeBottom.Name = "panelOfficeBottom";
@@ -163,7 +147,7 @@ namespace BizSqNotifier
             this.lblOfficeHint.Location = new System.Drawing.Point(620, 10);
             this.lblOfficeHint.Font = new System.Drawing.Font("맑은 고딕", 8.5F);
             this.lblOfficeHint.ForeColor = System.Drawing.Color.FromArgb(149, 165, 166);
-            this.lblOfficeHint.Text = "* 더블클릭하면 수동 발송 화면이 열립니다";
+            this.lblOfficeHint.Text = "* 수동 발송은 [수동 발송] 화면에서 진행하세요";
             this.lblOfficeHint.Name = "lblOfficeHint";
 
             this.panelOfficeBottom.Controls.Add(this.lblOfficeStatus);
@@ -173,12 +157,11 @@ namespace BizSqNotifier
             this.tabOffice.Controls.Add(this.panelOfficeBottom);
 
             // ════════════════════════════════════════
-            // tabAdBox
+            // tabAdBox — adBox/회원제 (15일 이내)
             // ════════════════════════════════════════
             this.tabAdBox.Text = "adBox·회원제 (15일 이내)";
             this.tabAdBox.Name = "tabAdBox";
 
-            // dgvAdBox
             this.dgvAdBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvAdBox.AllowUserToAddRows = false;
             this.dgvAdBox.AllowUserToDeleteRows = false;
@@ -202,7 +185,6 @@ namespace BizSqNotifier
             this.dgvAdBox.EnableHeadersVisualStyles = false;
             this.dgvAdBox.Name = "dgvAdBox";
 
-            // 컬럼 정의
             this.dgvAdBox.Columns.Add("colCust", "회사명");
             this.dgvAdBox.Columns.Add("colBranch", "지점");
             this.dgvAdBox.Columns.Add("colProduct", "상품/분류");
@@ -211,17 +193,14 @@ namespace BizSqNotifier
             this.dgvAdBox.Columns.Add("colDays", "남은일수");
             this.dgvAdBox.Columns.Add("colEmail", "이메일");
 
-            this.dgvAdBox.Columns.Add("colCust", "회사명");
-            this.dgvAdBox.Columns.Add("colBranch", "지점");
-            this.dgvAdBox.Columns.Add("colProduct", "상품/분류");
-            this.dgvAdBox.Columns.Add("colRoom", "호실");
-            this.dgvAdBox.Columns.Add("colDateTo", "계약종료일");
-            this.dgvAdBox.Columns.Add("colDays", "남은일수");
-            this.dgvAdBox.Columns.Add("colDeposit", "예치금");
-            this.dgvAdBox.Columns.Add("colPrice", "이용료");
-            this.dgvAdBox.Columns.Add("colEmail", "이메일");
+            this.dgvAdBox.Columns["colCust"].Width = 130;
+            this.dgvAdBox.Columns["colBranch"].Width = 90;
+            this.dgvAdBox.Columns["colProduct"].Width = 100;
+            this.dgvAdBox.Columns["colRoom"].Width = 60;
+            this.dgvAdBox.Columns["colDateTo"].Width = 95;
+            this.dgvAdBox.Columns["colDays"].Width = 65;
+            this.dgvAdBox.Columns["colEmail"].AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
 
-            // panelAdBoxBottom
             this.panelAdBoxBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelAdBoxBottom.Height = 36;
             this.panelAdBoxBottom.Name = "panelAdBoxBottom";
