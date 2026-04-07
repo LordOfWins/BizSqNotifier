@@ -124,7 +124,10 @@ FROM dbo.tb_movein m
 WHERE m.date_to IS NOT NULL AND m.date_to <> ''
   AND ISDATE(m.date_to) = 1
   AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_to AS DATE)) BETWEEN 0 AND @maxDays
-  AND ISNULL(m.prd_prd, '') IN ('개인사업자', '법인사업자', '스마트데스크')
+  AND (
+    ISNULL(m.prd_prd, '') IN ('개인사업자', '법인사업자')
+    OR ISNULL(m.prd_prd, '') LIKE '스마트데스크%'
+)
   AND (m.date_out IS NULL OR m.date_out = ''
        OR (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) >= CAST(m.date_to AS DATE)))
 ORDER BY m.date_to ASC, m.cust;";

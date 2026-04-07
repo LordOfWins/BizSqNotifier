@@ -71,7 +71,6 @@ WHERE i.send_yn = 'Y'
   AND (m.date_out IS NULL OR m.date_out = ''
        OR (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) >= CAST(GETDATE() AS DATE)))
   AND ISNULL(m.prd_prd, '') <> '모아즈'
-ORDER BY i.mi_id, i.id;
 ORDER BY i.mi_id, i.id;";
 
         #endregion
