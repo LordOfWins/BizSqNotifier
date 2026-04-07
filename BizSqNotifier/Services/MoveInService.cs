@@ -28,7 +28,8 @@ namespace BizSqNotifier.Services
         // tb_movein.date_from은 varchar(10) 'yyyy-MM-dd' 형식
         // tb_movein.br_code → tb_branch.br_code (varchar FK)
         // tb_movein.cu_id → tb_customer.id (int FK)
-        private const string SelectTodayMoveInSql = @"
+        private const string SelectTodayMoveInSql =
+            @"
 SELECT
     m.id                    AS movein_id,
     m.br_code,
@@ -45,6 +46,7 @@ FROM dbo.tb_movein m
     LEFT JOIN dbo.tb_customer c ON m.cu_id    = c.id
     LEFT JOIN dbo.tb_branch   b ON m.br_code  = b.br_code
 WHERE m.date_from = CONVERT(VARCHAR(10), GETDATE(), 120)
+  AND ISNULL(m.prd_prd, '') <> '모아즈'
 ORDER BY m.id;";
 
         #endregion
@@ -53,8 +55,15 @@ ORDER BY m.id;";
 
         public List<MoveInInfo> GetTodayTargets()
         {
-            try { return DbManager.ExecuteReader(SelectTodayMoveInSql, MapRow); }
-            catch (Exception ex) { AppLog.Error("입주 대상 조회 실패", ex); return new List<MoveInInfo>(); }
+            try
+            {
+                return DbManager.ExecuteReader(SelectTodayMoveInSql, MapRow);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("입주 대상 조회 실패", ex);
+                return new List<MoveInInfo>();
+            }
         }
 
         #endregion
@@ -62,10 +71,14 @@ ORDER BY m.id;";
         #region 전체 처리
 
         public (int Total, int Success, int Fail, int Skip) ProcessAll(
-            string printerLoginId, string printerLoginPw)
+            string printerLoginId,
+            string printerLoginPw
+        )
         {
             var targets = GetTodayTargets();
-            int success = 0, fail = 0, skip = 0;
+            int success = 0,
+                fail = 0,
+                skip = 0;
             AppLog.Info($"[입주] 오늘 대상 {targets.Count}건");
 
             foreach (var info in targets)
@@ -73,12 +86,29 @@ ORDER BY m.id;";
                 try
                 {
                     var r = ProcessOne(info, printerLoginId, printerLoginPw);
-                    switch (r.Status) { case "성공": success++; break; case "SKIP": skip++; break; default: fail++; break; }
+                    switch (r.Status)
+                    {
+                        case "성공":
+                            success++;
+                            break;
+                        case "SKIP":
+                            skip++;
+                            break;
+                        default:
+                            fail++;
+                            break;
+                    }
                 }
-                catch (Exception ex) { fail++; AppLog.Error($"[입주] 오류 MoveInId={info.MoveInId}", ex); }
+                catch (Exception ex)
+                {
+                    fail++;
+                    AppLog.Error($"[입주] 오류 MoveInId={info.MoveInId}", ex);
+                }
             }
 
-            AppLog.Info($"[입주] 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}");
+            AppLog.Info(
+                $"[입주] 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}"
+            );
             return (targets.Count, success, fail, skip);
         }
 
@@ -88,7 +118,8 @@ ORDER BY m.id;";
 
         public SendResult ProcessOne(MoveInInfo info, string printerLoginId, string printerLoginPw)
         {
-            if (info == null) return SendResult.Fail("MoveInInfo null");
+            if (info == null)
+                return SendResult.Fail("MoveInInfo null");
 
             // 중복 체크
             if (_logRepo.HasSentByMoveIn(MailTypes.MoveIn, info.MoveInId))
@@ -96,14 +127,25 @@ ORDER BY m.id;";
 
             // 이메일 미등록
             if (string.IsNullOrWhiteSpace(info.Email))
-            { var s = SendResult.Skip("이메일 미등록"); LogResult(info, s); return s; }
+            {
+                var s = SendResult.Skip("이메일 미등록");
+                LogResult(info, s);
+                return s;
+            }
 
             var tokens = BuildTokens(info, printerLoginId, printerLoginPw);
-            var subject = _template.RenderSubject(TemplateEngine.GetDefaultSubject(MailTypes.MoveIn), tokens);
+            var subject = _template.RenderSubject(
+                TemplateEngine.GetDefaultSubject(MailTypes.MoveIn),
+                tokens
+            );
             var body = _template.LoadAndRender(TemplateFiles.MoveIn, tokens);
 
             if (string.IsNullOrEmpty(body))
-            { var f = SendResult.Fail("템플릿 로드 실패"); LogResult(info, f); return f; }
+            {
+                var f = SendResult.Fail("템플릿 로드 실패");
+                LogResult(info, f);
+                return f;
+            }
 
             var result = _smtp.SendByBranch(info.BranchCode, info.Email, subject, body);
             LogResult(info, result);
@@ -114,20 +156,24 @@ ORDER BY m.id;";
 
         #region 토큰
 
-        private static Dictionary<string, string> BuildTokens(MoveInInfo info, string pid, string ppw)
+        private static Dictionary<string, string> BuildTokens(
+            MoveInInfo info,
+            string pid,
+            string ppw
+        )
         {
             return new Dictionary<string, string>
             {
-                ["회사명"]         = info.CustName ?? "",
+                ["회사명"] = info.CustName ?? "",
                 ["청구서수신이메일"] = info.Email ?? "",
-                ["지점"]           = info.BranchName ?? "",
-                ["상품/분류"]      = info.ProductName ?? "",
-                ["호실"]           = info.OfficeNum ?? "",
-                ["예치금"]         = info.Deposit.ToString("#,0"),
-                ["임대료"]         = info.Price.ToString("#,0"),
-                ["계약종료일"]     = info.DateTo ?? "",
-                ["복합기ID"]       = pid ?? "",
-                ["복합기PW"]       = ppw ?? ""
+                ["지점"] = info.BranchName ?? "",
+                ["상품/분류"] = info.ProductName ?? "",
+                ["호실"] = info.OfficeNum ?? "",
+                ["예치금"] = info.Deposit.ToString("#,0"),
+                ["임대료"] = info.Price.ToString("#,0"),
+                ["계약종료일"] = info.DateTo ?? "",
+                ["복합기ID"] = pid ?? "",
+                ["복합기PW"] = ppw ?? "",
             };
         }
 
@@ -139,11 +185,21 @@ ORDER BY m.id;";
         {
             try
             {
-                _logRepo.Insert(MailLogEntry.Create(
-                    MailTypes.MoveIn, info.MoveInId, info.CustName,
-                    info.Email, info.BranchCode, result));
+                _logRepo.Insert(
+                    MailLogEntry.Create(
+                        MailTypes.MoveIn,
+                        info.MoveInId,
+                        info.CustName,
+                        info.Email,
+                        info.BranchCode,
+                        result
+                    )
+                );
             }
-            catch (Exception ex) { AppLog.Error($"[입주] 로그 실패 {info.MoveInId}", ex); }
+            catch (Exception ex)
+            {
+                AppLog.Error($"[입주] 로그 실패 {info.MoveInId}", ex);
+            }
         }
 
         #endregion
@@ -154,17 +210,17 @@ ORDER BY m.id;";
         {
             return new MoveInInfo
             {
-                MoveInId    = DbManager.GetSafeInt(r, "movein_id"),
-                BranchCode  = DbManager.GetSafeString(r, "br_code"),
-                CustName    = DbManager.GetSafeString(r, "cust_name"),
-                Email       = DbManager.GetSafeString(r, "email"),
-                BranchName  = DbManager.GetSafeString(r, "branch_name"),
+                MoveInId = DbManager.GetSafeInt(r, "movein_id"),
+                BranchCode = DbManager.GetSafeString(r, "br_code"),
+                CustName = DbManager.GetSafeString(r, "cust_name"),
+                Email = DbManager.GetSafeString(r, "email"),
+                BranchName = DbManager.GetSafeString(r, "branch_name"),
                 ProductName = DbManager.GetSafeString(r, "product_name"),
-                OfficeNum   = DbManager.GetSafeString(r, "office_num"),
-                Deposit     = DbManager.GetSafeInt(r, "deposit"),
-                Price       = DbManager.GetSafeInt(r, "price"),
-                DateFrom    = DbManager.GetSafeString(r, "date_from"),
-                DateTo      = DbManager.GetSafeString(r, "date_to")
+                OfficeNum = DbManager.GetSafeString(r, "office_num"),
+                Deposit = DbManager.GetSafeInt(r, "deposit"),
+                Price = DbManager.GetSafeInt(r, "price"),
+                DateFrom = DbManager.GetSafeString(r, "date_from"),
+                DateTo = DbManager.GetSafeString(r, "date_to"),
             };
         }
 

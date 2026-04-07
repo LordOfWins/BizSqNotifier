@@ -28,7 +28,8 @@ namespace BizSqNotifier.Services
 
         #region SQL
 
-        private const string SelectTargetsSql = @"
+        private const string SelectTargetsSql =
+            @"
 SELECT
     m.id                    AS movein_id,
     m.br_code,
@@ -48,6 +49,7 @@ WHERE m.date_out IS NOT NULL
   AND m.date_out <> ''
   AND ISDATE(m.date_out) = 1
   AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) = @daysBefore
+  AND ISNULL(m.prd_prd, '') <> '모아즈'
 ORDER BY m.date_out ASC, m.cust;";
 
         #endregion
@@ -58,20 +60,31 @@ ORDER BY m.date_out ASC, m.cust;";
         {
             try
             {
-                return DbManager.ExecuteReader(SelectTargetsSql, MapRow,
-                    new SqlParameter("@daysBefore", daysBefore));
+                return DbManager.ExecuteReader(
+                    SelectTargetsSql,
+                    MapRow,
+                    new SqlParameter("@daysBefore", daysBefore)
+                );
             }
-            catch (Exception ex) { AppLog.Error($"[퇴실] 조회 실패 (D-{daysBefore})", ex); return new List<MoveOutInfo>(); }
+            catch (Exception ex)
+            {
+                AppLog.Error($"[퇴실] 조회 실패 (D-{daysBefore})", ex);
+                return new List<MoveOutInfo>();
+            }
         }
 
         #endregion
 
         #region 전체 처리
 
-        public (int Total, int Success, int Fail, int Skip) ProcessAll(int daysBefore = DefaultDaysBefore)
+        public (int Total, int Success, int Fail, int Skip) ProcessAll(
+            int daysBefore = DefaultDaysBefore
+        )
         {
             var targets = GetTargets(daysBefore);
-            int success = 0, fail = 0, skip = 0;
+            int success = 0,
+                fail = 0,
+                skip = 0;
             AppLog.Info($"[퇴실] 대상 {targets.Count}건 (D-{daysBefore})");
 
             foreach (var info in targets)
@@ -79,12 +92,29 @@ ORDER BY m.date_out ASC, m.cust;";
                 try
                 {
                     var r = ProcessOne(info);
-                    switch (r.Status) { case "성공": success++; break; case "SKIP": skip++; break; default: fail++; break; }
+                    switch (r.Status)
+                    {
+                        case "성공":
+                            success++;
+                            break;
+                        case "SKIP":
+                            skip++;
+                            break;
+                        default:
+                            fail++;
+                            break;
+                    }
                 }
-                catch (Exception ex) { fail++; AppLog.Error($"[퇴실] 오류 {info.MoveInId}", ex); }
+                catch (Exception ex)
+                {
+                    fail++;
+                    AppLog.Error($"[퇴실] 오류 {info.MoveInId}", ex);
+                }
             }
 
-            AppLog.Info($"[퇴실] 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}");
+            AppLog.Info(
+                $"[퇴실] 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}"
+            );
             return (targets.Count, success, fail, skip);
         }
 
@@ -94,20 +124,32 @@ ORDER BY m.date_out ASC, m.cust;";
 
         public SendResult ProcessOne(MoveOutInfo info)
         {
-            if (info == null) return SendResult.Fail("null");
+            if (info == null)
+                return SendResult.Fail("null");
 
             if (_logRepo.HasSentByMoveIn(MailTypes.MoveOut, info.MoveInId))
                 return SendResult.Skip("이미 발송 완료");
 
             if (string.IsNullOrWhiteSpace(info.Email))
-            { var s = SendResult.Skip("이메일 미등록"); LogResult(info, s); return s; }
+            {
+                var s = SendResult.Skip("이메일 미등록");
+                LogResult(info, s);
+                return s;
+            }
 
             var tokens = BuildTokens(info);
-            var subject = _template.RenderSubject(TemplateEngine.GetDefaultSubject(MailTypes.MoveOut), tokens);
+            var subject = _template.RenderSubject(
+                TemplateEngine.GetDefaultSubject(MailTypes.MoveOut),
+                tokens
+            );
             var body = _template.LoadAndRender(TemplateFiles.MoveOut, tokens);
 
             if (string.IsNullOrEmpty(body))
-            { var f = SendResult.Fail("템플릿 로드 실패"); LogResult(info, f); return f; }
+            {
+                var f = SendResult.Fail("템플릿 로드 실패");
+                LogResult(info, f);
+                return f;
+            }
 
             var result = _smtp.SendByBranch(info.BranchCode, info.Email, subject, body);
             LogResult(info, result);
@@ -122,13 +164,13 @@ ORDER BY m.date_out ASC, m.cust;";
         {
             return new Dictionary<string, string>
             {
-                ["회사명"]     = info.CustName ?? "",
+                ["회사명"] = info.CustName ?? "",
                 ["퇴실예정일"] = info.DateOut ?? "",
-                ["지점"]       = info.BranchName ?? "",
-                ["상품/분류"]  = info.ProductName ?? "",
-                ["호실"]       = info.OfficeNum ?? "",
-                ["예치금"]     = info.Deposit.ToString("#,0") + "원",
-                ["계약종료일"] = info.DateTo ?? ""
+                ["지점"] = info.BranchName ?? "",
+                ["상품/분류"] = info.ProductName ?? "",
+                ["호실"] = info.OfficeNum ?? "",
+                ["예치금"] = info.Deposit.ToString("#,0") + "원",
+                ["계약종료일"] = info.DateTo ?? "",
             };
         }
 
@@ -140,11 +182,21 @@ ORDER BY m.date_out ASC, m.cust;";
         {
             try
             {
-                _logRepo.Insert(MailLogEntry.Create(
-                    MailTypes.MoveOut, info.MoveInId, info.CustName,
-                    info.Email, info.BranchCode, result));
+                _logRepo.Insert(
+                    MailLogEntry.Create(
+                        MailTypes.MoveOut,
+                        info.MoveInId,
+                        info.CustName,
+                        info.Email,
+                        info.BranchCode,
+                        result
+                    )
+                );
             }
-            catch (Exception ex) { AppLog.Error($"[퇴실] 로그 실패 {info.MoveInId}", ex); }
+            catch (Exception ex)
+            {
+                AppLog.Error($"[퇴실] 로그 실패 {info.MoveInId}", ex);
+            }
         }
 
         #endregion
@@ -155,17 +207,17 @@ ORDER BY m.date_out ASC, m.cust;";
         {
             return new MoveOutInfo
             {
-                MoveInId         = DbManager.GetSafeInt(r, "movein_id"),
-                BranchCode       = DbManager.GetSafeString(r, "br_code"),
-                CustName         = DbManager.GetSafeString(r, "cust_name"),
-                Email            = DbManager.GetSafeString(r, "email"),
-                BranchName       = DbManager.GetSafeString(r, "branch_name"),
-                ProductName      = DbManager.GetSafeString(r, "product_name"),
-                OfficeNum        = DbManager.GetSafeString(r, "office_num"),
-                Deposit          = DbManager.GetSafeInt(r, "deposit"),
-                DateTo           = DbManager.GetSafeString(r, "date_to"),
-                DateOut          = DbManager.GetSafeString(r, "date_out"),
-                DaysUntilMoveOut = DbManager.GetSafeInt(r, "days_until_moveout")
+                MoveInId = DbManager.GetSafeInt(r, "movein_id"),
+                BranchCode = DbManager.GetSafeString(r, "br_code"),
+                CustName = DbManager.GetSafeString(r, "cust_name"),
+                Email = DbManager.GetSafeString(r, "email"),
+                BranchName = DbManager.GetSafeString(r, "branch_name"),
+                ProductName = DbManager.GetSafeString(r, "product_name"),
+                OfficeNum = DbManager.GetSafeString(r, "office_num"),
+                Deposit = DbManager.GetSafeInt(r, "deposit"),
+                DateTo = DbManager.GetSafeString(r, "date_to"),
+                DateOut = DbManager.GetSafeString(r, "date_out"),
+                DaysUntilMoveOut = DbManager.GetSafeInt(r, "days_until_moveout"),
             };
         }
 

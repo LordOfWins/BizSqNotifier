@@ -9,7 +9,9 @@ namespace BizSqNotifier.Services
     /// <summary>
     /// 계약 갱신 (오피스 수동) 서비스.
     /// 오피스 = prd_prd LIKE '%인실' (1인실~6인실)
-    /// 33일 전 목록 표시 → 수기 입력 → 수동 발송
+    /// 33일 전 모두 표시 → 수기 입력 → 수동 발송
+    /// (주소지/스마트데스크는 RenewalAutoService에서 자동 처리)
+    /// (모아즈는 발송 대상 아님)
     /// </summary>
     public sealed class RenewalManualService
     {

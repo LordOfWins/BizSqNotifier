@@ -34,7 +34,8 @@ namespace BizSqNotifier.Services
 
         #region SQL
 
-        private const string SelectUnpaidSql = @"
+        private const string SelectUnpaidSql =
+            @"
 SELECT
     i.mi_id                      AS movein_id,
     i.id                         AS invoice_id,
@@ -69,6 +70,8 @@ WHERE i.send_yn = 'Y'
   AND DATEDIFF(DAY, CAST(i.date_pay AS DATE), CAST(GETDATE() AS DATE)) <= 90
   AND (m.date_out IS NULL OR m.date_out = ''
        OR (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) >= CAST(GETDATE() AS DATE)))
+  AND ISNULL(m.prd_prd, '') <> '모아즈'
+ORDER BY i.mi_id, i.id;
 ORDER BY i.mi_id, i.id;";
 
         #endregion
@@ -84,18 +87,33 @@ ORDER BY i.mi_id, i.id;";
 
         /// <summary>기준일 명시 오버로드.</summary>
         public Dictionary<string, (int Total, int Success, int Fail, int Skip)> ProcessAll(
-            int days1st, int days2nd, int daysFinal)
+            int days1st,
+            int days2nd,
+            int daysFinal
+        )
         {
             var results = new Dictionary<string, (int, int, int, int)>();
 
             results[MailTypes.Unpaid1st] = ProcessStage(
-                MailTypes.Unpaid1st, TemplateFiles.Unpaid1st, days1st, days1st + 4);
+                MailTypes.Unpaid1st,
+                TemplateFiles.Unpaid1st,
+                days1st,
+                days1st + 4
+            );
 
             results[MailTypes.Unpaid2nd] = ProcessStage(
-                MailTypes.Unpaid2nd, TemplateFiles.Unpaid2nd, days2nd, days2nd + 3);
+                MailTypes.Unpaid2nd,
+                TemplateFiles.Unpaid2nd,
+                days2nd,
+                days2nd + 3
+            );
 
             results[MailTypes.UnpaidFinal] = ProcessStage(
-                MailTypes.UnpaidFinal, TemplateFiles.UnpaidFinal, daysFinal, daysFinal + 3);
+                MailTypes.UnpaidFinal,
+                TemplateFiles.UnpaidFinal,
+                daysFinal,
+                daysFinal + 3
+            );
 
             return results;
         }
@@ -105,10 +123,16 @@ ORDER BY i.mi_id, i.id;";
         #region 단계별 처리
 
         private (int Total, int Success, int Fail, int Skip) ProcessStage(
-            string mailType, string templateFile, int minDays, int deadlineOffset)
+            string mailType,
+            string templateFile,
+            int minDays,
+            int deadlineOffset
+        )
         {
             var targets = GetUnpaidTargets(minDays);
-            int success = 0, fail = 0, skip = 0;
+            int success = 0,
+                fail = 0,
+                skip = 0;
             AppLog.Info($"[{mailType}] 대상 {targets.Count}건 (>={minDays}일)");
 
             foreach (var info in targets)
@@ -116,12 +140,29 @@ ORDER BY i.mi_id, i.id;";
                 try
                 {
                     var r = ProcessOne(info, mailType, templateFile, deadlineOffset);
-                    switch (r.Status) { case "성공": success++; break; case "SKIP": skip++; break; default: fail++; break; }
+                    switch (r.Status)
+                    {
+                        case "성공":
+                            success++;
+                            break;
+                        case "SKIP":
+                            skip++;
+                            break;
+                        default:
+                            fail++;
+                            break;
+                    }
                 }
-                catch (Exception ex) { fail++; AppLog.Error($"[{mailType}] 오류 InvoiceId={info.InvoiceId}", ex); }
+                catch (Exception ex)
+                {
+                    fail++;
+                    AppLog.Error($"[{mailType}] 오류 InvoiceId={info.InvoiceId}", ex);
+                }
             }
 
-            AppLog.Info($"[{mailType}] 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}");
+            AppLog.Info(
+                $"[{mailType}] 완료 — 전체={targets.Count} 성공={success} 실패={fail} SKIP={skip}"
+            );
             return (targets.Count, success, fail, skip);
         }
 
@@ -129,22 +170,39 @@ ORDER BY i.mi_id, i.id;";
 
         #region 개별 처리
 
-        public SendResult ProcessOne(UnpaidInfo info, string mailType, string templateFile, int deadlineOffset)
+        public SendResult ProcessOne(
+            UnpaidInfo info,
+            string mailType,
+            string templateFile,
+            int deadlineOffset
+        )
         {
-            if (info == null) return SendResult.Fail("UnpaidInfo null");
+            if (info == null)
+                return SendResult.Fail("UnpaidInfo null");
 
             if (_logRepo.HasSentByInvoice(mailType, info.InvoiceId))
                 return SendResult.Skip("이미 발송 완료");
 
             if (string.IsNullOrWhiteSpace(info.Email))
-            { var s = SendResult.Skip("이메일 미등록"); LogResult(info, mailType, s); return s; }
+            {
+                var s = SendResult.Skip("이메일 미등록");
+                LogResult(info, mailType, s);
+                return s;
+            }
 
             var tokens = BuildTokens(info, deadlineOffset);
-            var subject = _template.RenderSubject(TemplateEngine.GetDefaultSubject(mailType), tokens);
+            var subject = _template.RenderSubject(
+                TemplateEngine.GetDefaultSubject(mailType),
+                tokens
+            );
             var body = _template.LoadAndRender(templateFile, tokens);
 
             if (string.IsNullOrEmpty(body))
-            { var f = SendResult.Fail("템플릿 로드 실패"); LogResult(info, mailType, f); return f; }
+            {
+                var f = SendResult.Fail("템플릿 로드 실패");
+                LogResult(info, mailType, f);
+                return f;
+            }
 
             var result = _smtp.SendByBranch(info.BranchCode, info.Email, subject, body);
             LogResult(info, mailType, result);
@@ -159,10 +217,17 @@ ORDER BY i.mi_id, i.id;";
         {
             try
             {
-                return DbManager.ExecuteReader(SelectUnpaidSql, MapRow,
-                    new SqlParameter("@minDays", minDays));
+                return DbManager.ExecuteReader(
+                    SelectUnpaidSql,
+                    MapRow,
+                    new SqlParameter("@minDays", minDays)
+                );
             }
-            catch (Exception ex) { AppLog.Error($"미납 대상 조회 실패 (minDays={minDays})", ex); return new List<UnpaidInfo>(); }
+            catch (Exception ex)
+            {
+                AppLog.Error($"미납 대상 조회 실패 (minDays={minDays})", ex);
+                return new List<UnpaidInfo>();
+            }
         }
 
         #endregion
@@ -178,14 +243,14 @@ ORDER BY i.mi_id, i.id;";
 
             return new Dictionary<string, string>
             {
-                ["회사명"]    = info.CustName ?? "",
-                ["지점"]      = info.BranchName ?? "",
+                ["회사명"] = info.CustName ?? "",
+                ["지점"] = info.BranchName ?? "",
                 ["상품/분류"] = info.ProductName ?? "",
-                ["호실"]      = info.OfficeNum ?? "",
-                ["합계금액"]  = info.TotalAmount.ToString("#,0") + "원",
-                ["납부기한"]  = deadline,
-                ["납부계좌"]  = info.BankAccount ?? "",
-                ["예금주"]    = info.BankHolder ?? ""
+                ["호실"] = info.OfficeNum ?? "",
+                ["합계금액"] = info.TotalAmount.ToString("#,0") + "원",
+                ["납부기한"] = deadline,
+                ["납부계좌"] = info.BankAccount ?? "",
+                ["예금주"] = info.BankHolder ?? "",
             };
         }
 
@@ -197,11 +262,22 @@ ORDER BY i.mi_id, i.id;";
         {
             try
             {
-                _logRepo.Insert(MailLogEntry.Create(
-                    mailType, info.MoveInId, info.CustName,
-                    info.Email, info.BranchCode, result, info.InvoiceId));
+                _logRepo.Insert(
+                    MailLogEntry.Create(
+                        mailType,
+                        info.MoveInId,
+                        info.CustName,
+                        info.Email,
+                        info.BranchCode,
+                        result,
+                        info.InvoiceId
+                    )
+                );
             }
-            catch (Exception ex) { AppLog.Error($"[{mailType}] 로그 실패 InvoiceId={info.InvoiceId}", ex); }
+            catch (Exception ex)
+            {
+                AppLog.Error($"[{mailType}] 로그 실패 InvoiceId={info.InvoiceId}", ex);
+            }
         }
 
         #endregion
@@ -212,19 +288,19 @@ ORDER BY i.mi_id, i.id;";
         {
             return new UnpaidInfo
             {
-                MoveInId    = DbManager.GetSafeInt(r, "movein_id"),
-                InvoiceId   = DbManager.GetSafeInt(r, "invoice_id"),
-                BranchCode  = DbManager.GetSafeString(r, "br_code"),
-                CustName    = DbManager.GetSafeString(r, "cust_name"),
-                Email       = DbManager.GetSafeString(r, "email"),
-                BranchName  = DbManager.GetSafeString(r, "branch_name"),
+                MoveInId = DbManager.GetSafeInt(r, "movein_id"),
+                InvoiceId = DbManager.GetSafeInt(r, "invoice_id"),
+                BranchCode = DbManager.GetSafeString(r, "br_code"),
+                CustName = DbManager.GetSafeString(r, "cust_name"),
+                Email = DbManager.GetSafeString(r, "email"),
+                BranchName = DbManager.GetSafeString(r, "branch_name"),
                 BankAccount = DbManager.GetSafeString(r, "bank_account"),
-                BankHolder  = DbManager.GetSafeString(r, "bank_holder"),
+                BankHolder = DbManager.GetSafeString(r, "bank_holder"),
                 ProductName = DbManager.GetSafeString(r, "product_name"),
-                OfficeNum   = DbManager.GetSafeString(r, "office_num"),
+                OfficeNum = DbManager.GetSafeString(r, "office_num"),
                 TotalAmount = DbManager.GetSafeInt(r, "total_amount"),
-                DatePay     = DbManager.GetSafeString(r, "date_pay"),
-                DaysOverdue = DbManager.GetSafeInt(r, "days_overdue")
+                DatePay = DbManager.GetSafeString(r, "date_pay"),
+                DaysOverdue = DbManager.GetSafeInt(r, "days_overdue"),
             };
         }
 
