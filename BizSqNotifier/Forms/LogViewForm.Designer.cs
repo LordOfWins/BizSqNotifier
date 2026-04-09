@@ -188,9 +188,8 @@ namespace BizSqNotifier
             this.lblResultCount.Text = "";
             this.lblResultCount.Name = "lblResultCount";
 
-            this.btnExportCsv.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            this.btnExportCsv.Location = new System.Drawing.Point(830, 6);
-            this.btnExportCsv.Size = new System.Drawing.Size(100, 28);
+            this.btnExportCsv.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnExportCsv.Size = new System.Drawing.Size(120, 28);
             this.btnExportCsv.Text = "CSV 내보내기";
             this.btnExportCsv.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnExportCsv.BackColor = System.Drawing.Color.FromArgb(44, 62, 80);
