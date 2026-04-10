@@ -10,6 +10,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{3F6FFD8D-C8D0-4564-8582-E3FA44B4C873}</ProjectGuid>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>BizSqNotifier.ico</ApplicationIcon>
     <RootNamespace>BizSqNotifier</RootNamespace>
     <AssemblyName>BizSqNotifier</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
@@ -75,7 +76,7 @@
 
     <!-- Config -->
     <Compile Include="Config\AppSettings.cs" />
-        <Compile Include="Config\UserSettings.cs" />  
+        <Compile Include="Config\UserSettings.cs" />
     <Compile Include="Config\LoginSession.cs" />
 
     <!-- Data -->
@@ -253,4 +254,3 @@
     </Content>
   </ItemGroup>
 </Project>
-

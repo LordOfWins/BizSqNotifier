@@ -1,16 +1,16 @@
 @echo off
 chcp 65001 >nul
 echo.
-echo ══════════════════════════════════════════
-echo   배포 패키지 생성
-echo ══════════════════════════════════════════
+echo ==========================================
+echo   BuildPackage
+echo ==========================================
 echo.
 
 SET SRC=..\bin\Release
 SET OUT=.\Package
 
 if not exist "%SRC%\BizSqNotifier.exe" (
-    echo [오류] Release 빌드를 먼저 실행하세요.
+    echo [Error] Release build first.
     pause
     exit /b 1
 )
@@ -20,7 +20,7 @@ mkdir "%OUT%"
 mkdir "%OUT%\Templates"
 mkdir "%OUT%\Scripts"
 
-echo 파일 복사 중...
+echo Copying files...
 copy /Y "%SRC%\BizSqNotifier.exe" "%OUT%\" >nul
 copy /Y "%SRC%\BizSqNotifier.exe.config" "%OUT%\" >nul
 copy /Y "%SRC%\Newtonsoft.Json.dll" "%OUT%\" >nul
@@ -29,20 +29,12 @@ copy /Y "%SRC%\Scripts\*.bat" "%OUT%\Scripts\" >nul
 copy /Y "Install.bat" "%OUT%\" >nul
 copy /Y "Uninstall.bat" "%OUT%\" >nul
 copy /Y "Update.bat" "%OUT%\" >nul
+copy /Y "..\..\BizSqNotifier.ico" "%OUT%\app.ico" >nul
+copy /Y "..\..\BizSqNotifier-Guide.html" "%OUT%\" >nul
 
 echo.
-echo ══════════════════════════════════════════
-echo   패키지 생성 완료: %OUT%
-echo.
-echo   Package\
-echo     BizSqNotifier.exe
-echo     BizSqNotifier.exe.config
-echo     Newtonsoft.Json.dll
-echo     Install.bat
-echo     Uninstall.bat
-echo     Update.bat
-echo     Templates\  (7개 HTML)
-echo     Scripts\    (2개 BAT)
-echo ══════════════════════════════════════════
+echo ==========================================
+echo   Package created: %OUT%
+echo ==========================================
 echo.
 pause

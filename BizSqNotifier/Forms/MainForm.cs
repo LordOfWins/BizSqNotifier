@@ -56,7 +56,7 @@ namespace BizSqNotifier
         {
             try
             {
-                var p = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
+                var p = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BizSqNotifier.ico");
                 if (System.IO.File.Exists(p)) return new Icon(p);
             }
             catch { }
