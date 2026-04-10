@@ -23,17 +23,6 @@ namespace BizSqNotifier
             this.btnRefresh = new System.Windows.Forms.Button();
             this.dgvTargets = new System.Windows.Forms.DataGridView();
 
-            // dgvTargets 컬럼 정의
-            this.dgvTargets.Columns.Add("colCust", "회사명");
-            this.dgvTargets.Columns.Add("colBranch", "지점");
-            this.dgvTargets.Columns.Add("colProduct", "상품/분류");
-            this.dgvTargets.Columns.Add("colRoom", "호실");
-            this.dgvTargets.Columns.Add("colDateTo", "계약종료일");
-            this.dgvTargets.Columns.Add("colDays", "남은일수");
-            this.dgvTargets.Columns.Add("colDeposit", "예치금");
-            this.dgvTargets.Columns.Add("colPrice", "이용료");
-            this.dgvTargets.Columns.Add("colEmail", "이메일");
-
             // ── 하단 패널: 수기 입력 + 발송 ──
             this.panelDetail = new System.Windows.Forms.Panel();
             this.lblSelected = new System.Windows.Forms.Label();
@@ -75,7 +64,7 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             this.splitMain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitMain.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            this.splitMain.SplitterDistance = 320;
+            this.splitMain.SplitterDistance = 200;
             this.splitMain.Name = "splitMain";
 
             // ── Panel1 (상단): 헤더 + DataGridView ──
@@ -321,9 +310,9 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(930, 620);
+            this.ClientSize = new System.Drawing.Size(930, 920);
             this.Controls.Add(this.splitMain);
-            this.MinimumSize = new System.Drawing.Size(800, 550);
+            this.MinimumSize = new System.Drawing.Size(800, 820);
             this.Name = "RenewalManualForm";
             this.Text = "계약 갱신 수동 발송 (오피스)";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
