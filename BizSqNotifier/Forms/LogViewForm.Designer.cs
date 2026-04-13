@@ -49,8 +49,8 @@ namespace BizSqNotifier
             // panelFilter
             // ════════════════════════════════════════
             this.panelFilter.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelFilter.Height = 88;
-            this.panelFilter.Padding = new System.Windows.Forms.Padding(12, 8, 12, 4);
+            this.panelFilter.Height = 92;
+            this.panelFilter.Padding = new System.Windows.Forms.Padding(12, 10, 12, 6);
             this.panelFilter.BackColor = System.Drawing.Color.FromArgb(245, 248, 250);
             this.panelFilter.Name = "panelFilter";
 
@@ -195,12 +195,12 @@ namespace BizSqNotifier
             // panelBottom
             // ════════════════════════════════════════
             this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelBottom.Height = 40;
-            this.panelBottom.Padding = new System.Windows.Forms.Padding(12, 6, 12, 6);
+            this.panelBottom.Height = 48;
+            this.panelBottom.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
             this.panelBottom.Name = "panelBottom";
 
             this.lblResultCount.AutoSize = true;
-            this.lblResultCount.Location = new System.Drawing.Point(12, 12);
+            this.lblResultCount.Location = new System.Drawing.Point(12, 14);
             this.lblResultCount.Font = new System.Drawing.Font("맑은 고딕", 9F);
             this.lblResultCount.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
             this.lblResultCount.Text = "";
@@ -223,11 +223,12 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1200, 620);
-            this.Controls.Add(this.panelFilter);
-            this.Controls.Add(this.panelBottom);
+            this.ClientSize = new System.Drawing.Size(1200, 650);
             this.Controls.Add(this.dgvLogs);
-            this.MinimumSize = new System.Drawing.Size(900, 450);
+            this.Controls.Add(this.panelBottom);
+            this.Controls.Add(this.panelFilter);
+            this.MinimumSize = new System.Drawing.Size(900, 500);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.Name = "LogViewForm";
             this.Text = "발송 현황 조회";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

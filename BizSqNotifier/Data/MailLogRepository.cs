@@ -124,11 +124,13 @@ FROM dbo.tb_mail_log WHERE send_date = @today GROUP BY mail_type;";
 
             var where = conds.Count > 0 ? "WHERE " + string.Join(" AND ", conds) : "";
             var sql = $@"
-SELECT TOP (@mx) log_id AS [No], mail_type AS [유형], cust_name AS [회사명],
+SELECT ROW_NUMBER() OVER (ORDER BY log_id DESC) AS [No], mail_type AS [유형], cust_name AS [회사명],
     email AS [이메일], send_date AS [발송일], send_time AS [발송시각],
-    status AS [상태], error_msg AS [에러메시지], movein_id AS [MoveInID],
-    invoice_id AS [InvoiceID], created_at AS [기록일시]
-FROM dbo.tb_mail_log {where} ORDER BY log_id DESC;";
+    status AS [상태], error_msg AS [에러메시지], movein_id AS [입주ID],
+    invoice_id AS [청구서ID], created_at AS [기록일시]
+FROM (
+    SELECT TOP (@mx) * FROM dbo.tb_mail_log {where} ORDER BY log_id DESC
+) sub ORDER BY log_id DESC;";
             parms.Add(new SqlParameter("@mx", maxRows));
             return DbManager.ExecuteQuery(sql, parms.ToArray());
         }
