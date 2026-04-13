@@ -224,9 +224,9 @@ namespace BizSqNotifier
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1200, 620);
-            this.Controls.Add(this.panelFilter);
-            this.Controls.Add(this.panelBottom);
             this.Controls.Add(this.dgvLogs);
+            this.Controls.Add(this.panelBottom);
+            this.Controls.Add(this.panelFilter);
             this.MinimumSize = new System.Drawing.Size(900, 450);
             this.Name = "LogViewForm";
             this.Text = "발송 현황 조회";
