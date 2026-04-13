@@ -171,10 +171,12 @@ namespace BizSqNotifier
             this.dgvLogs.ReadOnly = true;
             this.dgvLogs.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvLogs.MultiSelect = false;
-            this.dgvLogs.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvLogs.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.None;
             this.dgvLogs.RowHeadersVisible = false;
             this.dgvLogs.BackgroundColor = System.Drawing.Color.White;
             this.dgvLogs.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.dgvLogs.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            this.dgvLogs.ColumnHeadersHeight = 32;
             this.dgvLogs.AlternatingRowsDefaultCellStyle = new System.Windows.Forms.DataGridViewCellStyle
             {
                 BackColor = System.Drawing.Color.FromArgb(245, 248, 250)
@@ -221,11 +223,11 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(950, 560);
+            this.ClientSize = new System.Drawing.Size(1200, 620);
             this.Controls.Add(this.panelFilter);
             this.Controls.Add(this.panelBottom);
             this.Controls.Add(this.dgvLogs);
-            this.MinimumSize = new System.Drawing.Size(800, 450);
+            this.MinimumSize = new System.Drawing.Size(900, 450);
             this.Name = "LogViewForm";
             this.Text = "발송 현황 조회";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

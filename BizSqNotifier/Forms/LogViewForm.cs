@@ -193,16 +193,16 @@ namespace BizSqNotifier
             var widthMap = new System.Collections.Generic.Dictionary<string, int>
             {
                 ["No"] = 55,
-                ["유형"] = 70,
-                ["회사명"] = 160,
-                ["이메일"] = 200,
+                ["유형"] = 75,
+                ["회사명"] = 180,
+                ["이메일"] = 240,
                 ["발송일"] = 100,
-                ["발송시각"] = 75,
+                ["발송시각"] = 90,
                 ["상태"] = 55,
                 ["에러메시지"] = 200,
                 ["MoveInID"] = 65,
-                ["InvoiceID"] = 65,
-                ["기록일시"] = 130
+                ["InvoiceID"] = 70,
+                ["기록일시"] = 150
             };
 
             foreach (DataGridViewColumn col in dgvLogs.Columns)

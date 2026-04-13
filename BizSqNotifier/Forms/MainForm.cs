@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using BizSqNotifier.Config;
 using BizSqNotifier.Data;
+using BizSqNotifier.Models;
 using BizSqNotifier.Services;
 
 namespace BizSqNotifier
@@ -117,6 +118,21 @@ namespace BizSqNotifier
             btnLogView.Click += (s, e) => OpenForm<LogViewForm>();
             btnSettings.Click += (s, e) => OpenSettings();
             btnRefresh.Click += (s, e) => SafeRefreshDashboard();
+
+            // 카드 클릭 → 대상자 리스트 표시
+            WireCardClick(cardSend, OnCardSendClick);
+            WireCardClick(cardUnpaid, OnCardUnpaidClick);
+            WireCardClick(cardRenewal, OnCardRenewalClick);
+            WireCardClick(cardMoveOut, OnCardMoveOutClick);
+            WireCardClick(cardMoveIn, OnCardMoveInClick);
+        }
+
+        /// <summary>카드 Panel + 자식 Label 전체에 클릭 이벤트 연결.</summary>
+        private static void WireCardClick(Panel card, EventHandler handler)
+        {
+            card.Click += handler;
+            foreach (Control c in card.Controls)
+                c.Click += handler;
         }
 
         #endregion
@@ -219,6 +235,15 @@ namespace BizSqNotifier
                 lblCardMoveOutSub.ForeColor = cnt > 0 ? Color.FromArgb(142, 68, 173) : Color.FromArgb(127, 140, 141);
             }
             catch { lblCardMoveOutCount.Text = "-"; lblCardMoveOutSub.Text = "조회 실패"; lblCardMoveOutSub.ForeColor = Color.Red; }
+
+            try
+            {
+                var list = new MoveInService().GetTodayTargets();
+                lblCardMoveInCount.Text = list.Count.ToString();
+                lblCardMoveInSub.Text = list.Count > 0 ? "오늘 입주" : "대상 없음";
+                lblCardMoveInSub.ForeColor = list.Count > 0 ? Color.FromArgb(243, 156, 18) : Color.FromArgb(127, 140, 141);
+            }
+            catch { lblCardMoveInCount.Text = "-"; lblCardMoveInSub.Text = "조회 실패"; lblCardMoveInSub.ForeColor = Color.Red; }
         }
 
         /// <summary>7일 이내 퇴실 건수 — 단일 쿼리로 조회 (성능 개선).</summary>
@@ -259,6 +284,212 @@ WHERE date_out IS NOT NULL AND date_out <> ''
                 {
                     dgvToday.Rows[ri].Cells["colFail"].Style.ForeColor = Color.FromArgb(231, 76, 60);
                     dgvToday.Rows[ri].Cells["colFail"].Style.Font = new Font("맑은 고딕", 9F, FontStyle.Bold);
+                }
+            }
+        }
+
+        #endregion
+
+        #region 카드 클릭 — 대상자 리스트 표시
+
+        private bool _showingDetail = false;
+
+        private void ShowDetailGrid(string title, System.Data.DataTable dt)
+        {
+            _showingDetail = true;
+            lblGridTitle.Text = title + "  (클릭: 요약으로 돌아가기)";
+            lblGridTitle.ForeColor = Color.FromArgb(41, 128, 185);
+            lblGridTitle.Cursor = Cursors.Hand;
+            lblGridTitle.Click -= OnGridTitleClick;
+            lblGridTitle.Click += OnGridTitleClick;
+
+            dgvToday.DataSource = null;
+            dgvToday.Columns.Clear();
+            dgvToday.DataSource = dt;
+            dgvToday.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            // 더블클릭 이벤트 제거 (입주안내 전용은 별도 처리)
+            dgvToday.CellDoubleClick -= OnMoveInDoubleClick;
+        }
+
+        private void OnGridTitleClick(object sender, EventArgs e)
+        {
+            if (!_showingDetail) return;
+            _showingDetail = false;
+            lblGridTitle.Click -= OnGridTitleClick;
+            lblGridTitle.Cursor = Cursors.Default;
+            dgvToday.CellDoubleClick -= OnMoveInDoubleClick;
+
+            // 원래 요약 그리드로 복원
+            dgvToday.DataSource = null;
+            dgvToday.Columns.Clear();
+            dgvToday.Columns.AddRange(new DataGridViewColumn[]
+            {
+                new DataGridViewTextBoxColumn { HeaderText = "유형", Name = "colType", Width = 150 },
+                new DataGridViewTextBoxColumn { HeaderText = "성공", Name = "colSuccess", Width = 100,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, ForeColor = Color.FromArgb(39, 174, 96) } },
+                new DataGridViewTextBoxColumn { HeaderText = "실패", Name = "colFail", Width = 100,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter } },
+                new DataGridViewTextBoxColumn { HeaderText = "SKIP", Name = "colSkip", Width = 100,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, ForeColor = Color.FromArgb(211, 84, 0) } },
+                new DataGridViewTextBoxColumn { HeaderText = "합계", Name = "colTotal", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, Font = new Font("맑은 고딕", 9F, FontStyle.Bold) } }
+            });
+            dgvToday.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            SafeRefreshDashboard();
+        }
+
+        // ── 오늘 발송 카드 ──
+        private void OnCardSendClick(object sender, EventArgs e)
+        {
+            try
+            {
+                var dt = _logRepo.GetLogTable(DateTime.Today, DateTime.Today);
+                ShowDetailGrid("오늘 발송 내역", dt);
+            }
+            catch (Exception ex) { AppLog.Error("카드:오늘발송 클릭 오류", ex); }
+        }
+
+        // ── 미납 대상 카드 ──
+        private void OnCardUnpaidClick(object sender, EventArgs e)
+        {
+            try
+            {
+                var list = new UnpaidService().GetUnpaidTargets(UserSettings.Current.Unpaid1stDays);
+                var dt = new System.Data.DataTable();
+                dt.Columns.Add("회사명"); dt.Columns.Add("지점"); dt.Columns.Add("상품");
+                dt.Columns.Add("호실"); dt.Columns.Add("청구금액"); dt.Columns.Add("연체일수");
+                dt.Columns.Add("이메일");
+                foreach (var u in list)
+                    dt.Rows.Add(u.CustName, u.BranchName, u.ProductName, u.OfficeNum,
+                        u.TotalAmount.ToString("#,0") + "원", u.DaysOverdue + "일", u.Email ?? "(미등록)");
+                ShowDetailGrid($"미납 대상 ({list.Count}건)", dt);
+            }
+            catch (Exception ex) { AppLog.Error("카드:미납 클릭 오류", ex); }
+        }
+
+        // ── 갱신 예정 카드 ──
+        private void OnCardRenewalClick(object sender, EventArgs e)
+        {
+            try
+            {
+                var list = new RenewalManualService().GetRenewalTargets(UserSettings.Current.RenewalManualDays);
+                var dt = new System.Data.DataTable();
+                dt.Columns.Add("회사명"); dt.Columns.Add("지점"); dt.Columns.Add("상품");
+                dt.Columns.Add("호실"); dt.Columns.Add("계약종료일"); dt.Columns.Add("남은일수");
+                dt.Columns.Add("이메일");
+                foreach (var r in list)
+                    dt.Rows.Add(r.CustName, r.BranchName, r.ProductName, r.OfficeNum,
+                        r.DateTo, r.DaysUntilExpiry + "일", r.Email ?? "(미등록)");
+                ShowDetailGrid($"갱신 예정 ({list.Count}건)", dt);
+            }
+            catch (Exception ex) { AppLog.Error("카드:갱신 클릭 오류", ex); }
+        }
+
+        // ── 퇴실 예정 카드 ──
+        private void OnCardMoveOutClick(object sender, EventArgs e)
+        {
+            try
+            {
+                var list = new MoveOutService().GetTargetsWithinDays(7);
+                var dt = new System.Data.DataTable();
+                dt.Columns.Add("회사명"); dt.Columns.Add("지점"); dt.Columns.Add("상품");
+                dt.Columns.Add("호실"); dt.Columns.Add("퇴실일"); dt.Columns.Add("이메일");
+                foreach (var m in list)
+                    dt.Rows.Add(m.CustName, m.BranchName, m.ProductName, m.OfficeNum,
+                        m.DateOut, m.Email ?? "(미등록)");
+                ShowDetailGrid($"퇴실 예정 ({list.Count}건)", dt);
+            }
+            catch (Exception ex) { AppLog.Error("카드:퇴실 클릭 오류", ex); }
+        }
+
+        // ── 입주 안내 카드 ──
+        private List<MoveInInfo> _moveInTargets;
+
+        private void OnCardMoveInClick(object sender, EventArgs e)
+        {
+            try
+            {
+                _moveInTargets = new MoveInService().GetTodayTargets();
+                var dt = new System.Data.DataTable();
+                dt.Columns.Add("회사명"); dt.Columns.Add("지점"); dt.Columns.Add("상품");
+                dt.Columns.Add("호실"); dt.Columns.Add("입주일"); dt.Columns.Add("이메일");
+                foreach (var m in _moveInTargets)
+                    dt.Rows.Add(m.CustName, m.BranchName, m.ProductName, m.OfficeNum,
+                        m.DateFrom, m.Email ?? "(미등록)");
+                ShowDetailGrid($"입주 안내 대상 ({_moveInTargets.Count}건) — 더블클릭: 복합기 ID/PW 입력 후 발송", dt);
+                dgvToday.CellDoubleClick += OnMoveInDoubleClick;
+            }
+            catch (Exception ex) { AppLog.Error("카드:입주 클릭 오류", ex); }
+        }
+
+        private void OnMoveInDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || _moveInTargets == null || e.RowIndex >= _moveInTargets.Count) return;
+            var info = _moveInTargets[e.RowIndex];
+
+            if (string.IsNullOrWhiteSpace(info.Email))
+            {
+                MessageBox.Show("이메일이 등록되지 않은 고객입니다.", "발송 불가",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 복합기 ID/PW 입력 폼
+            using (var dlg = new Form
+            {
+                Text = $"입주 발송 — {info.CustName}",
+                Size = new Size(380, 220),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false, MinimizeBox = false
+            })
+            {
+                var lblId = new Label { Text = "복합기 ID:", Location = new Point(20, 24), AutoSize = true };
+                var txtId = new TextBox { Location = new Point(120, 20), Size = new Size(220, 23),
+                    Text = UserSettings.Current.PrinterLoginId };
+                var lblPw = new Label { Text = "복합기 PW:", Location = new Point(20, 60), AutoSize = true };
+                var txtPw = new TextBox { Location = new Point(120, 56), Size = new Size(220, 23),
+                    Text = UserSettings.Current.PrinterLoginPw };
+                var lblInfo = new Label { Text = $"{info.CustName} / {info.BranchName} / {info.OfficeNum}\n{info.Email}",
+                    Location = new Point(20, 96), AutoSize = true, ForeColor = Color.FromArgb(127, 140, 141) };
+                var btnOk = new Button { Text = "발송", Location = new Point(140, 140), Size = new Size(90, 32),
+                    BackColor = Color.FromArgb(39, 174, 96), ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat, DialogResult = DialogResult.OK };
+                var btnCancel = new Button { Text = "취소", Location = new Point(240, 140), Size = new Size(90, 32),
+                    FlatStyle = FlatStyle.Flat, DialogResult = DialogResult.Cancel };
+
+                dlg.Controls.AddRange(new Control[] { lblId, txtId, lblPw, txtPw, lblInfo, btnOk, btnCancel });
+                dlg.AcceptButton = btnOk;
+                dlg.CancelButton = btnCancel;
+
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+                var pid = txtId.Text.Trim();
+                var ppw = txtPw.Text.Trim();
+
+                try
+                {
+                    var svc = new MoveInService();
+                    var result = svc.ProcessOne(info, pid, ppw);
+                    if (result.Success)
+                    {
+                        MessageBox.Show($"'{info.CustName}' 발송 완료!", "성공",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        OnCardMoveInClick(null, null); // 리스트 갱신
+                        SafeRefreshDashboard();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"결과: {result.Status}\n{result.ErrorMessage}", "결과",
+                            MessageBoxButtons.OK, result.Status == "SKIP" ? MessageBoxIcon.Warning : MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("입주 수동 발송 오류", ex);
+                    MessageBox.Show("발송 오류:\n" + ex.Message, "오류",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

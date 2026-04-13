@@ -47,6 +47,11 @@ namespace BizSqNotifier
             this.lblCardMoveOutCount = new System.Windows.Forms.Label();
             this.lblCardMoveOutSub = new System.Windows.Forms.Label();
 
+            this.cardMoveIn = new System.Windows.Forms.Panel();
+            this.lblCardMoveInTitle = new System.Windows.Forms.Label();
+            this.lblCardMoveInCount = new System.Windows.Forms.Label();
+            this.lblCardMoveInSub = new System.Windows.Forms.Label();
+
             // ── 오늘 발송 현황 그리드 ──
             this.lblGridTitle = new System.Windows.Forms.Label();
             this.dgvToday = new System.Windows.Forms.DataGridView();
@@ -69,6 +74,7 @@ namespace BizSqNotifier
             this.cardUnpaid.SuspendLayout();
             this.cardRenewal.SuspendLayout();
             this.cardMoveOut.SuspendLayout();
+            this.cardMoveIn.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvToday)).BeginInit();
             this.panelMenu.SuspendLayout();
             this.SuspendLayout();
@@ -125,9 +131,9 @@ namespace BizSqNotifier
             this.panelCards.Size = new Size(910, 110);
             this.panelCards.Name = "panelCards";
 
-            int cardW = 208;
+            int cardW = 166;
             int cardH = 90;
-            int cardGap = 12;
+            int cardGap = 10;
             int cardStartX = 16;
             int cardY = 10;
 
@@ -151,10 +157,16 @@ namespace BizSqNotifier
                 "퇴실 예정", Color.FromArgb(142, 68, 173),
                 cardStartX + (cardW + cardGap) * 3, cardY, cardW, cardH);
 
+            // ── Card: 입주 안내 ──
+            BuildCard(this.cardMoveIn, this.lblCardMoveInTitle, this.lblCardMoveInCount, this.lblCardMoveInSub,
+                "입주 안내", Color.FromArgb(243, 156, 18),
+                cardStartX + (cardW + cardGap) * 4, cardY, cardW, cardH);
+
             this.panelCards.Controls.Add(this.cardSend);
             this.panelCards.Controls.Add(this.cardUnpaid);
             this.panelCards.Controls.Add(this.cardRenewal);
             this.panelCards.Controls.Add(this.cardMoveOut);
+            this.panelCards.Controls.Add(this.cardMoveIn);
 
             // ════════════════════════════════════════
             // 오늘 발송 현황 그리드
@@ -282,6 +294,8 @@ namespace BizSqNotifier
             this.cardRenewal.PerformLayout();
             this.cardMoveOut.ResumeLayout(false);
             this.cardMoveOut.PerformLayout();
+            this.cardMoveIn.ResumeLayout(false);
+            this.cardMoveIn.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvToday)).EndInit();
             this.panelMenu.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -308,6 +322,7 @@ namespace BizSqNotifier
             card.BackColor = Color.White;
             card.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             card.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
+            card.Cursor = System.Windows.Forms.Cursors.Hand;
 
             // 좌측 색상 바 효과
             var bar = new System.Windows.Forms.Panel
@@ -393,6 +408,10 @@ namespace BizSqNotifier
         private System.Windows.Forms.Label lblCardMoveOutTitle;
         private System.Windows.Forms.Label lblCardMoveOutCount;
         private System.Windows.Forms.Label lblCardMoveOutSub;
+        private System.Windows.Forms.Panel cardMoveIn;
+        private System.Windows.Forms.Label lblCardMoveInTitle;
+        private System.Windows.Forms.Label lblCardMoveInCount;
+        private System.Windows.Forms.Label lblCardMoveInSub;
 
         private System.Windows.Forms.Label lblGridTitle;
         private System.Windows.Forms.DataGridView dgvToday;

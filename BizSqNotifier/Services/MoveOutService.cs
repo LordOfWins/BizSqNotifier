@@ -52,6 +52,30 @@ WHERE m.date_out IS NOT NULL
   AND ISNULL(m.prd_prd, '') <> '모아즈'
 ORDER BY m.date_out ASC, m.cust;";
 
+        private const string SelectTargetsRangeSql =
+            @"
+SELECT
+    m.id                    AS movein_id,
+    m.br_code,
+    m.cust                  AS cust_name,
+    c.email,
+    b.br_name               AS branch_name,
+    m.prd_prd               AS product_name,
+    m.off_num               AS office_num,
+    ISNULL(m.deposit, 0)    AS deposit,
+    m.date_to,
+    m.date_out,
+    DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) AS days_until_moveout
+FROM dbo.tb_movein m
+    LEFT JOIN dbo.tb_customer c ON m.cu_id   = c.id
+    LEFT JOIN dbo.tb_branch   b ON m.br_code = b.br_code
+WHERE m.date_out IS NOT NULL
+  AND m.date_out <> ''
+  AND ISDATE(m.date_out) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) BETWEEN 0 AND @maxDays
+  AND ISNULL(m.prd_prd, '') <> '모아즈'
+ORDER BY m.date_out ASC, m.cust;";
+
         #endregion
 
         #region 대상 조회
@@ -69,6 +93,24 @@ ORDER BY m.date_out ASC, m.cust;";
             catch (Exception ex)
             {
                 AppLog.Error($"[퇴실] 조회 실패 (D-{daysBefore})", ex);
+                return new List<MoveOutInfo>();
+            }
+        }
+
+        /// <summary>오늘~maxDays일 이내 퇴실 대상 범위 조회.</summary>
+        public List<MoveOutInfo> GetTargetsWithinDays(int maxDays = 7)
+        {
+            try
+            {
+                return DbManager.ExecuteReader(
+                    SelectTargetsRangeSql,
+                    MapRow,
+                    new SqlParameter("@maxDays", maxDays)
+                );
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error($"[퇴실] 범위 조회 실패 (0~{maxDays}일)", ex);
                 return new List<MoveOutInfo>();
             }
         }
