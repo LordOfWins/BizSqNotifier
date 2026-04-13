@@ -127,6 +127,13 @@ namespace BizSqNotifier
         {
             lblVersion.Text = "v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
 
+            // 관리자(1) 외 일반 사원은 설정 버튼 비활성화
+            if (LoginSession.IsLoggedIn && LoginSession.AccountLevel != 1)
+            {
+                btnSettings.Enabled = false;
+                btnSettings.BackColor = Color.FromArgb(189, 195, 199);
+            }
+
             if (_silentMode)
             {
                 this.WindowState = FormWindowState.Minimized;
@@ -264,7 +271,15 @@ WHERE date_out IS NOT NULL AND date_out <> ''
         { using (var f = new T()) f.ShowDialog(this); SafeRefreshDashboard(); }
 
         private void OpenSettings()
-        { using (var f = new SettingsForm()) f.ShowDialog(this); UserSettings.Reload(); SafeRefreshDashboard(); }
+        {
+            if (LoginSession.IsLoggedIn && LoginSession.AccountLevel != 1)
+            {
+                MessageBox.Show("관리자 권한이 필요합니다.\nMOS 관리자 계정으로 로그인해 주세요.",
+                    "접근 제한", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            using (var f = new SettingsForm()) f.ShowDialog(this); UserSettings.Reload(); SafeRefreshDashboard();
+        }
 
         #endregion
     }
