@@ -103,7 +103,7 @@ namespace BizSqNotifier
             this.cmbStatus.Font = new System.Drawing.Font("맑은 고딕", 9F);
             this.cmbStatus.Name = "cmbStatus";
 
-            // ── Row 2: 회사명 + 검색/초기화 버튼 ──
+            // ── Row 2: 회사명 + 지점 + 검색/초기화 버튼 ──
             int r2Y = r1Y + 32;
 
             this.lblCustName.AutoSize = true;
@@ -223,11 +223,11 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1200, 650);
+            this.ClientSize = new System.Drawing.Size(1380, 650);
             this.Controls.Add(this.dgvLogs);
             this.Controls.Add(this.panelBottom);
             this.Controls.Add(this.panelFilter);
-            this.MinimumSize = new System.Drawing.Size(900, 500);
+            this.MinimumSize = new System.Drawing.Size(1000, 500);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.Name = "LogViewForm";
             this.Text = "발송 현황 조회";
