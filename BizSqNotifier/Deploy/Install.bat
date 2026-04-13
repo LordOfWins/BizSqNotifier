@@ -6,7 +6,7 @@ echo   BizSqNotifier Install
 echo ==========================================
 echo.
 
-SET INSTALL_DIR=C:\BizSqNotifier
+SET INSTALL_DIR=C:\Users\%USERNAME%\BizSqNotifier
 SET SHORTCUT_NAME=BizSqNotifier
 
 echo Install path: %INSTALL_DIR%
@@ -23,7 +23,7 @@ echo Copying files...
 copy /Y "%~dp0BizSqNotifier.exe" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0BizSqNotifier.exe.config" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0Newtonsoft.Json.dll" "%INSTALL_DIR%\" >nul
-copy /Y "%~dp0app.ico" "%INSTALL_DIR%\" >nul
+copy /Y "%~dp0BizSqNotifier.ico" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0BizSqNotifier-Guide.html" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0Templates\*.html" "%INSTALL_DIR%\Templates\" >nul
 copy /Y "%~dp0Scripts\*.bat" "%INSTALL_DIR%\Scripts\" >nul
@@ -38,7 +38,7 @@ if not exist "%INSTALL_DIR%\settings.json" (
 )
 
 echo Creating shortcut...
-powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([System.IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), '%SHORTCUT_NAME%.lnk')); $s.TargetPath = '%INSTALL_DIR%\BizSqNotifier.exe'; $s.WorkingDirectory = '%INSTALL_DIR%'; $s.IconLocation = '%INSTALL_DIR%\app.ico,0'; $s.Description = 'BizSqNotifier'; $s.Save()"
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([System.IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), '%SHORTCUT_NAME%.lnk')); $s.TargetPath = '%INSTALL_DIR%\BizSqNotifier.exe'; $s.WorkingDirectory = '%INSTALL_DIR%'; $s.IconLocation = '%INSTALL_DIR%\BizSqNotifier.ico,0'; $s.Description = 'BizSqNotifier'; $s.Save()"
 
 echo.
 echo Task Scheduler...

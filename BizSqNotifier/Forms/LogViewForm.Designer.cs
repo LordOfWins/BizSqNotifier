@@ -27,6 +27,8 @@ namespace BizSqNotifier
             this.cmbStatus = new System.Windows.Forms.ComboBox();
             this.lblCustName = new System.Windows.Forms.Label();
             this.txtCustName = new System.Windows.Forms.TextBox();
+            this.lblBranch = new System.Windows.Forms.Label();
+            this.cmbBranch = new System.Windows.Forms.ComboBox();
             this.btnSearch = new System.Windows.Forms.Button();
             this.btnReset = new System.Windows.Forms.Button();
 
@@ -115,6 +117,18 @@ namespace BizSqNotifier
             this.txtCustName.Font = new System.Drawing.Font("맑은 고딕", 9F);
             this.txtCustName.Name = "txtCustName";
 
+            this.lblBranch.AutoSize = true;
+            this.lblBranch.Location = new System.Drawing.Point(280, r2Y + 3);
+            this.lblBranch.Text = "지점:";
+            this.lblBranch.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.lblBranch.Name = "lblBranch";
+
+            this.cmbBranch.Location = new System.Drawing.Point(316, r2Y);
+            this.cmbBranch.Size = new System.Drawing.Size(160, 23);
+            this.cmbBranch.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbBranch.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.cmbBranch.Name = "cmbBranch";
+
             this.btnSearch.Location = new System.Drawing.Point(500, r2Y - 2);
             this.btnSearch.Size = new System.Drawing.Size(80, 28);
             this.btnSearch.Text = "검색";
@@ -143,6 +157,8 @@ namespace BizSqNotifier
             this.panelFilter.Controls.Add(this.cmbStatus);
             this.panelFilter.Controls.Add(this.lblCustName);
             this.panelFilter.Controls.Add(this.txtCustName);
+            this.panelFilter.Controls.Add(this.lblBranch);
+            this.panelFilter.Controls.Add(this.cmbBranch);
             this.panelFilter.Controls.Add(this.btnSearch);
             this.panelFilter.Controls.Add(this.btnReset);
 
@@ -235,6 +251,8 @@ namespace BizSqNotifier
         private System.Windows.Forms.ComboBox cmbStatus;
         private System.Windows.Forms.Label lblCustName;
         private System.Windows.Forms.TextBox txtCustName;
+        private System.Windows.Forms.Label lblBranch;
+        private System.Windows.Forms.ComboBox cmbBranch;
         private System.Windows.Forms.Button btnSearch;
         private System.Windows.Forms.Button btnReset;
 

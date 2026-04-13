@@ -50,6 +50,10 @@ namespace BizSqNotifier.Services
 
                 var settings = UserSettings.Current;
 
+                // 자동 발송 비활성화 시 스킵 (RunAllNow 수동 실행은 영향 없음)
+                if (!settings.AutoSendEnabled)
+                    return;
+
                 var generalTime = settings.GeneralSendTimeSpan;
                 if (IsTimeToRun(now, generalTime, "General"))
                 { MarkExecuted("General", generalTime); RunGeneralTasks(settings); }

@@ -27,6 +27,7 @@ namespace BizSqNotifier
             this.Load += OnFormLoad;
             btnRefresh.Click += (s, e) => LoadTargets();
             dgvTargets.SelectionChanged += OnSelectionChanged;
+            btnPreview.Click += OnPreviewClick;
             btnSend.Click += OnSendClick;
         }
 
@@ -85,6 +86,81 @@ namespace BizSqNotifier
                 dtpReplyDeadline.Value = dt.AddDays(-7) < DateTime.Today ? DateTime.Today : dt.AddDays(-7);
 
             txtReferenceNote.Text = "";
+        }
+
+        private void OnPreviewClick(object sender, EventArgs e)
+        {
+            if (dgvTargets.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("미리볼 건을 선택해 주세요.", "안내",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var idx = dgvTargets.SelectedRows[0].Index;
+            if (idx >= _targets.Count) return;
+
+            var info = _targets[idx];
+
+            // 수기 입력값 반영
+            info.NewDeposit = txtNewDeposit.Text.Trim();
+            info.NewPrice = txtNewPrice.Text.Trim();
+            info.ReplyDeadline = dtpReplyDeadline.Value.ToString("yyyy-MM-dd");
+            info.ReferenceNote = txtReferenceNote.Text.Trim();
+
+            try
+            {
+                var template = new TemplateEngine();
+                var tokens = new Dictionary<string, string>
+                {
+                    ["회사명"]       = info.CustName ?? "",
+                    ["지점"]         = info.BranchName ?? "",
+                    ["상품/분류"]    = info.ProductName ?? "",
+                    ["호실"]         = info.OfficeNum ?? "",
+                    ["예치금"]       = info.Deposit.ToString("#,0") + "원",
+                    ["임대료"]       = info.Price.ToString("#,0") + "원",
+                    ["계약종료일"]   = info.DateTo ?? "",
+                    ["납부계좌"]     = info.BankAccount ?? "",
+                    ["예금주"]       = info.BankHolder ?? "",
+                    ["변경예치금"]   = info.NewDeposit ?? "",
+                    ["변경이용료"]   = info.NewPrice ?? "",
+                    ["회신요청일"]   = info.ReplyDeadline ?? "",
+                    ["참조안내사항"] = info.ReferenceNote ?? ""
+                };
+
+                var body = template.LoadAndRender(TemplateFiles.RenewalOffice, tokens);
+                if (string.IsNullOrEmpty(body))
+                {
+                    MessageBox.Show("템플릿 로드 실패", "오류",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // WebBrowser 기반 미리보기 폼
+                var previewForm = new Form
+                {
+                    Text = $"미리보기 — {info.CustName}",
+                    Size = new System.Drawing.Size(750, 700),
+                    StartPosition = FormStartPosition.CenterParent,
+                    MinimumSize = new System.Drawing.Size(600, 400)
+                };
+
+                var browser = new WebBrowser
+                {
+                    Dock = System.Windows.Forms.DockStyle.Fill,
+                    ScriptErrorsSuppressed = true
+                };
+
+                previewForm.Controls.Add(browser);
+                previewForm.Show(this);
+                browser.DocumentText = body;
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("미리보기 오류", ex);
+                MessageBox.Show("미리보기 오류:\n" + ex.Message, "오류",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void OnSendClick(object sender, EventArgs e)

@@ -109,7 +109,8 @@ FROM dbo.tb_mail_log WHERE send_date = @today GROUP BY mail_type;";
         }
 
         public DataTable GetLogTable(DateTime? dateFrom = null, DateTime? dateTo = null,
-            string mailType = null, string custName = null, string status = null, int maxRows = 500)
+            string mailType = null, string custName = null, string status = null,
+            string branchCode = null, int maxRows = 500)
         {
             var conds = new List<string>();
             var parms = new List<SqlParameter>();
@@ -119,6 +120,7 @@ FROM dbo.tb_mail_log WHERE send_date = @today GROUP BY mail_type;";
             if (!string.IsNullOrWhiteSpace(mailType)) { conds.Add("mail_type = @mt"); parms.Add(new SqlParameter("@mt", mailType)); }
             if (!string.IsNullOrWhiteSpace(custName)) { conds.Add("cust_name LIKE @cn"); parms.Add(new SqlParameter("@cn", "%" + custName.Trim() + "%")); }
             if (!string.IsNullOrWhiteSpace(status)) { conds.Add("status = @st"); parms.Add(new SqlParameter("@st", status)); }
+            if (!string.IsNullOrWhiteSpace(branchCode)) { conds.Add("branch_code = @bc"); parms.Add(new SqlParameter("@bc", branchCode)); }
 
             var where = conds.Count > 0 ? "WHERE " + string.Join(" AND ", conds) : "";
             var sql = $@"

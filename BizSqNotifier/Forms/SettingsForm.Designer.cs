@@ -28,6 +28,7 @@ namespace BizSqNotifier
 
             // ── 발송 시각/기준일 탭 컨트롤 ──
             this.grpSendTime = new System.Windows.Forms.GroupBox();
+            this.chkAutoSend = new System.Windows.Forms.CheckBox();
             this.lblGeneralTime = new System.Windows.Forms.Label();
             this.dtpGeneralTime = new System.Windows.Forms.DateTimePicker();
             this.lblUnpaidTime = new System.Windows.Forms.Label();
@@ -132,17 +133,24 @@ namespace BizSqNotifier
             // ── grpSendTime ──
             this.grpSendTime.Text = "발송 시각";
             this.grpSendTime.Location = new System.Drawing.Point(14, 12);
-            this.grpSendTime.Size = new System.Drawing.Size(520, 90);
+            this.grpSendTime.Size = new System.Drawing.Size(520, 120);
             this.grpSendTime.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
             this.grpSendTime.Name = "grpSendTime";
 
+            this.chkAutoSend.AutoSize = true;
+            this.chkAutoSend.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
+            this.chkAutoSend.ForeColor = System.Drawing.Color.FromArgb(192, 57, 43);
+            this.chkAutoSend.Location = new System.Drawing.Point(16, 24);
+            this.chkAutoSend.Text = "자동 발송 활성화 (체크 해제 시 스케줄 발송 중단)";
+            this.chkAutoSend.Name = "chkAutoSend";
+
             this.lblGeneralTime.AutoSize = true;
             this.lblGeneralTime.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            this.lblGeneralTime.Location = new System.Drawing.Point(16, 28);
+            this.lblGeneralTime.Location = new System.Drawing.Point(16, 52);
             this.lblGeneralTime.Text = "입주/퇴실/갱신자동:";
             this.lblGeneralTime.Name = "lblGeneralTime";
 
-            this.dtpGeneralTime.Location = new System.Drawing.Point(160, 24);
+            this.dtpGeneralTime.Location = new System.Drawing.Point(160, 48);
             this.dtpGeneralTime.Size = new System.Drawing.Size(100, 23);
             this.dtpGeneralTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpGeneralTime.CustomFormat = "HH:mm";
@@ -151,17 +159,18 @@ namespace BizSqNotifier
 
             this.lblUnpaidTime.AutoSize = true;
             this.lblUnpaidTime.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            this.lblUnpaidTime.Location = new System.Drawing.Point(16, 58);
+            this.lblUnpaidTime.Location = new System.Drawing.Point(16, 82);
             this.lblUnpaidTime.Text = "미납 안내:";
             this.lblUnpaidTime.Name = "lblUnpaidTime";
 
-            this.dtpUnpaidTime.Location = new System.Drawing.Point(160, 54);
+            this.dtpUnpaidTime.Location = new System.Drawing.Point(160, 78);
             this.dtpUnpaidTime.Size = new System.Drawing.Size(100, 23);
             this.dtpUnpaidTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpUnpaidTime.CustomFormat = "HH:mm";
             this.dtpUnpaidTime.ShowUpDown = true;
             this.dtpUnpaidTime.Name = "dtpUnpaidTime";
 
+            this.grpSendTime.Controls.Add(this.chkAutoSend);
             this.grpSendTime.Controls.Add(this.lblGeneralTime);
             this.grpSendTime.Controls.Add(this.dtpGeneralTime);
             this.grpSendTime.Controls.Add(this.lblUnpaidTime);
@@ -169,7 +178,7 @@ namespace BizSqNotifier
 
             // ── grpDays ──
             this.grpDays.Text = "발송 기준일";
-            this.grpDays.Location = new System.Drawing.Point(14, 112);
+            this.grpDays.Location = new System.Drawing.Point(14, 142);
             this.grpDays.Size = new System.Drawing.Size(520, 220);
             this.grpDays.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
             this.grpDays.Name = "grpDays";
@@ -502,6 +511,7 @@ namespace BizSqNotifier
         private System.Windows.Forms.TextBox txtPrinterPw;
 
         private System.Windows.Forms.GroupBox grpSendTime;
+        private System.Windows.Forms.CheckBox chkAutoSend;
         private System.Windows.Forms.Label lblGeneralTime;
         private System.Windows.Forms.DateTimePicker dtpGeneralTime;
         private System.Windows.Forms.Label lblUnpaidTime;

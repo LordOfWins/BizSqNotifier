@@ -65,6 +65,10 @@ namespace BizSqNotifier.Config
 
         #region 발송 시각 설정
 
+        /// <summary>자동 발송 활성화 여부 (기본 false — 수동 확인 후 활성화)</summary>
+        [JsonProperty("autoSendEnabled")]
+        public bool AutoSendEnabled { get; set; } = false;
+
         /// <summary>입주/퇴실/갱신자동 발송 시각 (HH:mm, 기본 09:00)</summary>
         [JsonProperty("generalSendTime")]
         public string GeneralSendTime { get; set; } = "09:00";

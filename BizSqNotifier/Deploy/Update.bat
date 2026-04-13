@@ -6,7 +6,7 @@ echo   BizSqNotifier Update
 echo ==========================================
 echo.
 
-SET INSTALL_DIR=C:\BizSqNotifier
+SET INSTALL_DIR=C:\Users\%USERNAME%\BizSqNotifier
 
 if not exist "%INSTALL_DIR%\BizSqNotifier.exe" (
     echo [Error] No existing install found.
@@ -21,7 +21,7 @@ timeout /t 2 /nobreak >nul
 echo Updating files...
 copy /Y "%~dp0BizSqNotifier.exe" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0Newtonsoft.Json.dll" "%INSTALL_DIR%\" >nul
-copy /Y "%~dp0app.ico" "%INSTALL_DIR%\" >nul
+copy /Y "%~dp0BizSqNotifier.ico" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0BizSqNotifier-Guide.html" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0Templates\*.html" "%INSTALL_DIR%\Templates\" >nul
 copy /Y "%~dp0Scripts\*.bat" "%INSTALL_DIR%\Scripts\" >nul

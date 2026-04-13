@@ -6,7 +6,7 @@ echo   BizSqNotifier Uninstall
 echo ==========================================
 echo.
 
-SET INSTALL_DIR=C:\BizSqNotifier
+SET INSTALL_DIR=C:\Users\%USERNAME%\BizSqNotifier
 
 echo Path: %INSTALL_DIR%
 echo.
@@ -30,7 +30,7 @@ echo Removing files...
 del /Q "%INSTALL_DIR%\BizSqNotifier.exe" >nul 2>&1
 del /Q "%INSTALL_DIR%\BizSqNotifier.exe.config" >nul 2>&1
 del /Q "%INSTALL_DIR%\Newtonsoft.Json.dll" >nul 2>&1
-del /Q "%INSTALL_DIR%\app.ico" >nul 2>&1
+del /Q "%INSTALL_DIR%\BizSqNotifier.ico" >nul 2>&1
 del /Q "%INSTALL_DIR%\BizSqNotifier-Guide.html" >nul 2>&1
 del /Q "%INSTALL_DIR%\Templates\*.html" >nul 2>&1
 rd /Q "%INSTALL_DIR%\Templates" >nul 2>&1

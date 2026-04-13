@@ -39,6 +39,7 @@ namespace BizSqNotifier
         private void OnFormLoad(object sender, EventArgs e)
         {
             var s = UserSettings.Current;
+            chkAutoSend.Checked = s.AutoSendEnabled;
             txtPrinterId.Text = s.PrinterLoginId;
             txtPrinterPw.Text = s.PrinterLoginPw;
             dtpGeneralTime.Value = DateTime.Today.Add(s.GeneralSendTimeSpan);
@@ -83,6 +84,7 @@ namespace BizSqNotifier
             try
             {
                 var s = UserSettings.Current;
+                s.AutoSendEnabled = chkAutoSend.Checked;
                 s.PrinterLoginId = txtPrinterId.Text.Trim();
                 s.PrinterLoginPw = txtPrinterPw.Text.Trim();
                 s.GeneralSendTime = dtpGeneralTime.Value.ToString("HH:mm");

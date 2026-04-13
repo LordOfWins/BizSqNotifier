@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using BizSqNotifier.Data;
+using BizSqNotifier.Models;
 using BizSqNotifier.Services;
 
 namespace BizSqNotifier
@@ -13,7 +14,7 @@ namespace BizSqNotifier
     /// 발송 현황 조회 화면.
     ///
     /// 기능:
-    ///   - 기간별 / 유형별 / 상태별 / 회사명 검색
+    ///   - 기간별 / 유형별 / 상태별 / 회사명 / 지점별 검색
     ///   - DataGridView에 결과 표시 (최대 500건)
     ///   - 상태별 셀 색상 (성공=녹색, 실패=빨강, SKIP=주황)
     ///   - CSV 내보내기
@@ -25,11 +26,13 @@ namespace BizSqNotifier
     public partial class LogViewForm : Form
     {
         private readonly MailLogRepository _logRepo;
+        private readonly BranchRepository _branchRepo;
 
         public LogViewForm()
         {
             InitializeComponent();
             _logRepo = new MailLogRepository();
+            _branchRepo = new BranchRepository();
 
             WireEvents();
         }
@@ -92,6 +95,21 @@ namespace BizSqNotifier
             cmbStatus.Items.Add("SKIP");
             cmbStatus.SelectedIndex = 0;
 
+            // 지점 콤보
+            cmbBranch.Items.Clear();
+            cmbBranch.Items.Add("(전체)");
+            try
+            {
+                var branches = _branchRepo.GetAll();
+                foreach (var br in branches)
+                    cmbBranch.Items.Add(br.BranchCode + "|" + br.BranchName);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("지점 목록 로드 실패 (LogViewForm)", ex);
+            }
+            cmbBranch.SelectedIndex = 0;
+
             txtCustName.Text = string.Empty;
         }
 
@@ -128,8 +146,17 @@ namespace BizSqNotifier
                 if (!string.IsNullOrWhiteSpace(txtCustName.Text))
                     custName = txtCustName.Text.Trim();
 
+                string branchCode = null;
+                if (cmbBranch.SelectedIndex > 0)
+                {
+                    var selected = cmbBranch.SelectedItem.ToString();
+                    var pipeIdx = selected.IndexOf('|');
+                    if (pipeIdx > 0)
+                        branchCode = selected.Substring(0, pipeIdx);
+                }
+
                 // DB 조회 (DataTable → DataGridView 바인딩)
-                var dt = _logRepo.GetLogTable(dateFrom, dateTo, mailType, custName, status);
+                var dt = _logRepo.GetLogTable(dateFrom, dateTo, mailType, custName, status, branchCode);
 
                 dgvLogs.DataSource = null;
                 dgvLogs.DataSource = dt;
@@ -165,16 +192,16 @@ namespace BizSqNotifier
             // 컬럼별 적정 너비 설정
             var widthMap = new System.Collections.Generic.Dictionary<string, int>
             {
-                ["No"] = 60,
-                ["유형"] = 80,
-                ["회사명"] = 140,
-                ["이메일"] = 170,
-                ["발송일"] = 90,
-                ["발송시각"] = 80,
-                ["상태"] = 60,
+                ["No"] = 55,
+                ["유형"] = 70,
+                ["회사명"] = 160,
+                ["이메일"] = 200,
+                ["발송일"] = 100,
+                ["발송시각"] = 75,
+                ["상태"] = 55,
                 ["에러메시지"] = 200,
-                ["MoveInID"] = 70,
-                ["InvoiceID"] = 70,
+                ["MoveInID"] = 65,
+                ["InvoiceID"] = 65,
                 ["기록일시"] = 130
             };
 

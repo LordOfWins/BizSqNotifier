@@ -29,7 +29,7 @@ copy /Y "%SRC%\Scripts\*.bat" "%OUT%\Scripts\" >nul
 copy /Y "Install.bat" "%OUT%\" >nul
 copy /Y "Uninstall.bat" "%OUT%\" >nul
 copy /Y "Update.bat" "%OUT%\" >nul
-copy /Y "..\..\BizSqNotifier.ico" "%OUT%\app.ico" >nul
+copy /Y "..\..\BizSqNotifier.ico" "%OUT%\BizSqNotifier.ico" >nul
 copy /Y "..\..\BizSqNotifier-Guide.html" "%OUT%\" >nul
 
 echo.
