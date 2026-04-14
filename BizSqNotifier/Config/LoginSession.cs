@@ -12,7 +12,7 @@ namespace BizSqNotifier.Config
         /// <summary>로그인한 사용자 이름 (tb_accnt.uname)</summary>
         public static string UserName { get; set; }
 
-        /// <summary>권한 레벨 (tb_accnt.accnt) — 1=최고관리자, 200=일반</summary>
+        /// <summary>권한 레벨 (tb_accnt.accnt) — 1=최고관리자, 10=운영관리자, 200=일반, 500=투자대표</summary>
         public static int AccountLevel { get; set; }
 
         /// <summary>지점 코드 (tb_accnt.br_code)</summary>
@@ -20,6 +20,13 @@ namespace BizSqNotifier.Config
 
         /// <summary>로그인 여부</summary>
         public static bool IsLoggedIn => !string.IsNullOrEmpty(UserId);
+
+        /// <summary>
+        /// 관리자 여부 판별.
+        /// accnt 1=최고관리자, 10=운영관리자 → 설정 접근 가능
+        /// accnt 200=일반, 500=투자대표 → 설정 접근 불가
+        /// </summary>
+        public static bool IsAdmin => AccountLevel <= 10;
 
         /// <summary>세션 초기화 (로그아웃 시)</summary>
         public static void Clear()

@@ -85,7 +85,18 @@ ORDER BY m.id;";
             {
                 try
                 {
-                    var r = ProcessOne(info, printerLoginId, printerLoginPw);
+                    // 자동 발송: 주소지(개인사업자/법인사업자)만 → 복합기 섹션 제거
+                    // 오피스(~인실)/스마트데스크는 자동 발송 제외 (수동만)
+                    var prd = info.ProductName ?? "";
+                    if (prd.EndsWith("인실") || prd.StartsWith("스마트데스크"))
+                    {
+                        skip++;
+                        AppLog.Info($"[입주] SKIP (수동전용) MoveInId={info.MoveInId} prd={prd}");
+                        continue;
+                    }
+
+                    // 주소지는 복합기 ID/PW 빈값으로 발송 → 섹션 자동 제거
+                    var r = ProcessOne(info, "", "");
                     switch (r.Status)
                     {
                         case "성공":

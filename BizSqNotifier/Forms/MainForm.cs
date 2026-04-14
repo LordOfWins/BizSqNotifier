@@ -144,7 +144,7 @@ namespace BizSqNotifier
             lblVersion.Text = "v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
 
             // 관리자(1) 외 일반 사원은 설정 버튼 비활성화
-            if (LoginSession.IsLoggedIn && LoginSession.AccountLevel != 1)
+            if (LoginSession.IsLoggedIn && !LoginSession.IsAdmin)
             {
                 btnSettings.Enabled = false;
                 btnSettings.BackColor = Color.FromArgb(189, 195, 199);
@@ -435,7 +435,44 @@ WHERE date_out IS NOT NULL AND date_out <> ''
                 return;
             }
 
-            // 복합기 ID/PW 입력 폼
+            var prd = info.ProductName ?? "";
+            var isAddressType = (prd == "개인사업자" || prd == "법인사업자");
+
+            // 주소지(개인사업자/법인사업자) → 복합기 없이 바로 발송 (섹션 제거)
+            if (isAddressType)
+            {
+                var confirm = MessageBox.Show(
+                    $"[{info.CustName}] ({info.Email})\n주소지 입주 안내 메일을 발송하시겠습니까?\n(복합기 안내 섹션 제외)",
+                    "발송 확인", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (confirm != DialogResult.Yes) return;
+
+                try
+                {
+                    var svc = new MoveInService();
+                    var result = svc.ProcessOne(info, "", "");
+                    if (result.Success)
+                    {
+                        MessageBox.Show($"'{info.CustName}' 발송 완료!", "성공",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        OnCardMoveInClick(null, null);
+                        SafeRefreshDashboard();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"결과: {result.Status}\n{result.ErrorMessage}", "결과",
+                            MessageBoxButtons.OK, result.Status == "SKIP" ? MessageBoxIcon.Warning : MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("입주 수동 발송 오류 (주소지)", ex);
+                    MessageBox.Show("발송 오류:\n" + ex.Message, "오류",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                return;
+            }
+
+            // 오피스(~인실) / 스마트데스크 → 복합기 ID/PW 입력 필수
             using (var dlg = new Form
             {
                 Text = $"입주 발송 — {info.CustName}",
@@ -468,6 +505,14 @@ WHERE date_out IS NOT NULL AND date_out <> ''
                 var pid = txtId.Text.Trim();
                 var ppw = txtPw.Text.Trim();
 
+                // 오피스/스마트데스크는 복합기 ID/PW 필수
+                if (string.IsNullOrWhiteSpace(pid) || string.IsNullOrWhiteSpace(ppw))
+                {
+                    MessageBox.Show("오피스/스마트데스크는 복합기 ID와 PW를 모두 입력해야 합니다.",
+                        "입력 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 try
                 {
                     var svc = new MoveInService();
@@ -476,7 +521,7 @@ WHERE date_out IS NOT NULL AND date_out <> ''
                     {
                         MessageBox.Show($"'{info.CustName}' 발송 완료!", "성공",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        OnCardMoveInClick(null, null); // 리스트 갱신
+                        OnCardMoveInClick(null, null);
                         SafeRefreshDashboard();
                     }
                     else
@@ -503,7 +548,7 @@ WHERE date_out IS NOT NULL AND date_out <> ''
 
         private void OpenSettings()
         {
-            if (LoginSession.IsLoggedIn && LoginSession.AccountLevel != 1)
+            if (LoginSession.IsLoggedIn && !LoginSession.IsAdmin)
             {
                 MessageBox.Show("관리자 권한이 필요합니다.\nMOS 관리자 계정으로 로그인해 주세요.",
                     "접근 제한", MessageBoxButtons.OK, MessageBoxIcon.Warning);
