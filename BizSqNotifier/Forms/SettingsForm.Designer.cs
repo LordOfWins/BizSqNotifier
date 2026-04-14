@@ -458,7 +458,7 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(580, 440);
+            this.ClientSize = new System.Drawing.Size(580, 500);
             this.Controls.Add(this.tabControl);
             this.Controls.Add(this.panelBottom);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
