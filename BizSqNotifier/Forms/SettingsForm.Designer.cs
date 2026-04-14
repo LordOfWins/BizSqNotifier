@@ -84,7 +84,10 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             // tabControl
             // ════════════════════════════════════════
-            this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl.Dock = System.Windows.Forms.DockStyle.None;
+            this.tabControl.Location = new System.Drawing.Point(0, 0);
+            this.tabControl.Size = new System.Drawing.Size(580, 500);
+            this.tabControl.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.tabControl.TabPages.Add(this.tabPrinter);
             this.tabControl.TabPages.Add(this.tabSchedule);
             this.tabControl.TabPages.Add(this.tabConnection);
@@ -417,8 +420,9 @@ namespace BizSqNotifier
             // ════════════════════════════════════════
             // panelBottom — 저장 / 취소
             // ════════════════════════════════════════
-            this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelBottom.Height = 52;
+            this.panelBottom.Dock = System.Windows.Forms.DockStyle.None;
+            this.panelBottom.Location = new System.Drawing.Point(0, 500);
+            this.panelBottom.Size = new System.Drawing.Size(580, 52);
             this.panelBottom.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
             this.panelBottom.Name = "panelBottom";
 
@@ -459,8 +463,8 @@ namespace BizSqNotifier
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(580, 560);
-            this.Controls.Add(this.panelBottom);
             this.Controls.Add(this.tabControl);
+            this.Controls.Add(this.panelBottom);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
