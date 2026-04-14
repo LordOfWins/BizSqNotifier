@@ -180,6 +180,11 @@ ORDER BY m.date_to ASC, m.cust;";
             if (DateTime.TryParse(info.DateTo, out var dt))
                 replyDeadline = dt.AddDays(-2).ToString("yyyy-MM-dd");
 
+            // 서비스명: 법인사업자/개인사업자 → "~주소지 구독서비스" 자동 붙이기
+            var productDisplay = info.ProductName ?? "";
+            if (productDisplay == "법인사업자" || productDisplay == "개인사업자")
+                productDisplay += " 주소지 구독서비스";
+
             return new Dictionary<string, string>
             {
                 ["회사명"] = info.CustName ?? "",
@@ -187,7 +192,7 @@ ORDER BY m.date_to ASC, m.cust;";
                 ["회신기한"] = replyDeadline,
                 ["계약종료일 포함 3일전"] = replyDeadline,
                 ["지점"] = info.BranchName ?? "",
-                ["상품/분류"] = info.ProductName ?? "",
+                ["상품/분류"] = productDisplay,
                 ["호실"] = info.OfficeNum ?? "",
                 ["예치금"] = info.Deposit.ToString("#,0") + "원",
                 ["임대료"] = info.Price.ToString("#,0") + "원",

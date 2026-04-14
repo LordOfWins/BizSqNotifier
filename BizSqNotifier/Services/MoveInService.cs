@@ -147,6 +147,17 @@ ORDER BY m.id;";
                 return f;
             }
 
+            // 복합기 ID/PW 미입력 시 복합기 안내 섹션 통째로 제거
+            if (string.IsNullOrWhiteSpace(printerLoginId) && string.IsNullOrWhiteSpace(printerLoginPw))
+            {
+                var startTag = "<!-- PRINTER_SECTION_START -->";
+                var endTag = "<!-- PRINTER_SECTION_END -->";
+                var si = body.IndexOf(startTag);
+                var ei = body.IndexOf(endTag);
+                if (si >= 0 && ei > si)
+                    body = body.Remove(si, ei + endTag.Length - si);
+            }
+
             var result = _smtp.SendByBranch(info.BranchCode, info.Email, subject, body);
             LogResult(info, result);
             return result;

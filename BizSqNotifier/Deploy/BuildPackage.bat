@@ -1,4 +1,6 @@
 @echo off
+cd /d "%~dp0"
+@echo off
 chcp 65001 >nul
 echo.
 echo ==========================================

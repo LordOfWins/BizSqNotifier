@@ -96,6 +96,7 @@ namespace BizSqNotifier
                 s.RenewalManualDays = (int)nudRenewalManual.Value;
                 s.MoveOutDays = (int)nudMoveOut.Value;
                 s.Save();
+                UserSettings.Reload();
 
                 lblSaveStatus.Text = "저장 완료 (" + DateTime.Now.ToString("HH:mm:ss") + ")";
                 lblSaveStatus.ForeColor = Color.FromArgb(39, 174, 96);
