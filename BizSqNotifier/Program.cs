@@ -39,6 +39,22 @@ namespace BizSqNotifier
 
             var normalizedArgs = args.Select(a => a.ToLowerInvariant().Trim()).ToArray();
 
+            // ── /autosend 모드: Windows 작업 스케줄러에서 호출 → autoSendEnabled 체크 후 실행 ──
+            if (normalizedArgs.Contains("/autosend"))
+            {
+                AppLog.Info("모드: /autosend — 작업 스케줄러 호출");
+                var settings = UserSettings.Current;
+                if (!settings.AutoSendEnabled)
+                {
+                    AppLog.Info("/autosend 모드이나 autoSendEnabled=false → 발송 스킵");
+                    ReleaseMutex();
+                    return;
+                }
+                RunOnceAndExit();
+                ReleaseMutex();
+                return;
+            }
+
             // ── /run 모드: 즉시 전체 발송 1회 후 종료 ──
             if (normalizedArgs.Contains("/run"))
             {
