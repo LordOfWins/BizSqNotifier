@@ -55,10 +55,17 @@ namespace BizSqNotifier
                 return;
             }
 
-            // ── /run 모드: 즉시 전체 발송 1회 후 종료 ──
+            // ── /run 모드: 즉시 전체 발송 1회 후 종료 (autoSendEnabled 체크) ──
             if (normalizedArgs.Contains("/run"))
             {
                 AppLog.Info("모드: /run — 즉시 실행");
+                var settings = UserSettings.Current;
+                if (!settings.AutoSendEnabled)
+                {
+                    AppLog.Info("/run 모드이나 autoSendEnabled=false → 발송 스킵");
+                    ReleaseMutex();
+                    return;
+                }
                 RunOnceAndExit();
                 ReleaseMutex();
                 return;

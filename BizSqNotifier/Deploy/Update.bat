@@ -18,6 +18,14 @@ if not exist "%INSTALL_DIR%\BizSqNotifier.exe" (
 taskkill /IM BizSqNotifier.exe /F >nul 2>&1
 timeout /t 2 /nobreak >nul
 
+echo Removing legacy scheduled tasks...
+schtasks /delete /tn "BizSqNotifier\DailyRun" /f >nul 2>&1
+schtasks /delete /tn "BizSqNotifier\AutoStart" /f >nul 2>&1
+schtasks /delete /tn "BizSqNotifier_09" /f >nul 2>&1
+schtasks /delete /tn "BizSqNotifier_13" /f >nul 2>&1
+schtasks /delete /tn "BizSqNotifier_Startup" /f >nul 2>&1
+echo   [OK] Legacy tasks cleaned
+
 echo Updating files...
 copy /Y "%~dp0BizSqNotifier.exe" "%INSTALL_DIR%\" >nul
 copy /Y "%~dp0Newtonsoft.Json.dll" "%INSTALL_DIR%\" >nul

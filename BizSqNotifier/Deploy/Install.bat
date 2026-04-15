@@ -43,18 +43,12 @@ echo Creating shortcut...
 powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([System.IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), '%SHORTCUT_NAME%.lnk')); $s.TargetPath = '%INSTALL_DIR%\BizSqNotifier.exe'; $s.WorkingDirectory = '%INSTALL_DIR%'; $s.IconLocation = '%INSTALL_DIR%\BizSqNotifier.ico,0'; $s.Description = 'BizSqNotifier'; $s.Save()"
 
 echo.
-echo Task Scheduler...
-
-schtasks /create /tn "BizSqNotifier\AutoStart" /tr "\"%INSTALL_DIR%\BizSqNotifier.exe\" /silent" /sc ONLOGON /rl HIGHEST /f >nul 2>&1
-if %ERRORLEVEL% EQU 0 (echo   [OK] AutoStart) else (echo   [!] AutoStart failed)
-
-schtasks /create /tn "BizSqNotifier\DailyRun" /tr "\"%INSTALL_DIR%\BizSqNotifier.exe\" /run" /sc DAILY /st 08:55 /rl HIGHEST /f >nul 2>&1
-if %ERRORLEVEL% EQU 0 (echo   [OK] DailyRun) else (echo   [!] DailyRun failed)
-
-echo.
 echo ==========================================
 echo   Install complete!
 echo   Path: %INSTALL_DIR%
+echo.
+echo   [참고] 자동 발송 스케줄러는 프로그램 내
+echo          설정 > 연결 테스트 탭에서 등록하세요.
 echo ==========================================
 echo.
 pause
