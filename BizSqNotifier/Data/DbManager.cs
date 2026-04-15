@@ -123,7 +123,8 @@ namespace BizSqNotifier.Data
                     cmd.CommandTimeout = 30;
                     if (parameters != null && parameters.Length > 0)
                     {
-                        cmd.Parameters.AddRange(parameters);
+                        foreach (var p in parameters)
+                            cmd.Parameters.Add(new SqlParameter(p.ParameterName, p.SqlDbType) { Value = p.Value ?? System.DBNull.Value });
                     }
                     using (var adapter = new SqlDataAdapter(cmd))
                     {
@@ -149,7 +150,8 @@ namespace BizSqNotifier.Data
                     cmd.CommandTimeout = 30;
                     if (parameters != null && parameters.Length > 0)
                     {
-                        cmd.Parameters.AddRange(parameters);
+                        foreach (var p in parameters)
+                            cmd.Parameters.Add(new SqlParameter(p.ParameterName, p.SqlDbType) { Value = p.Value ?? System.DBNull.Value });
                     }
                     conn.Open();
                     result = cmd.ExecuteNonQuery();
@@ -172,7 +174,8 @@ namespace BizSqNotifier.Data
                     cmd.CommandTimeout = 30;
                     if (parameters != null && parameters.Length > 0)
                     {
-                        cmd.Parameters.AddRange(parameters);
+                        foreach (var p in parameters)
+                            cmd.Parameters.Add(new SqlParameter(p.ParameterName, p.SqlDbType) { Value = p.Value ?? System.DBNull.Value });
                     }
                     conn.Open();
                     result = cmd.ExecuteScalar();
@@ -189,13 +192,17 @@ namespace BizSqNotifier.Data
             var list = new List<T>();
             ExecuteWithRetry(() =>
             {
+                list.Clear();
                 using (var conn = CreateConnection())
                 using (var cmd = new SqlCommand(sql, conn))
                 {
                     cmd.CommandTimeout = 30;
                     if (parameters != null && parameters.Length > 0)
                     {
-                        cmd.Parameters.AddRange(parameters);
+                        foreach (var p in parameters)
+                        {
+                            cmd.Parameters.Add(new SqlParameter(p.ParameterName, p.SqlDbType) { Value = p.Value ?? DBNull.Value });
+                        }
                     }
                     conn.Open();
                     using (var reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
