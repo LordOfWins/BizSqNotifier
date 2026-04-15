@@ -54,7 +54,7 @@ WHERE m.date_to IS NOT NULL
   AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_to AS DATE)) BETWEEN 0 AND @maxDays
   AND m.prd_prd LIKE '%인실'
   AND (m.date_out IS NULL OR m.date_out = ''
-       OR (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) >= CAST(m.date_to AS DATE)))
+       OR NOT (ISDATE(m.date_out) = 1 AND CAST(m.date_out AS DATE) < CAST(GETDATE() AS DATE)))
 ORDER BY m.date_to ASC, m.cust;";
 
         #endregion
