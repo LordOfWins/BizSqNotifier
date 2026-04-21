@@ -45,12 +45,13 @@ SELECT
 FROM dbo.tb_movein m
     LEFT JOIN dbo.tb_customer c ON m.cu_id   = c.id
     LEFT JOIN dbo.tb_branch   b ON m.br_code = b.br_code
-WHERE m.date_out IS NOT NULL
-  AND m.date_out <> ''
-  AND ISDATE(m.date_out) = 1
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) = @daysBefore
+WHERE m.date_to IS NOT NULL
+  AND m.date_to <> ''
+  AND ISDATE(m.date_to) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_to AS DATE)) BETWEEN 0 AND @maxDays
+  AND (m.date_out IS NULL OR m.date_out = '')
   AND ISNULL(m.prd_prd, '') <> '모아즈'
-ORDER BY m.date_out ASC, m.cust;";
+ORDER BY m.date_to ASC, m.cust;";
 
         private const string SelectTargetsRangeSql =
             @"
@@ -72,7 +73,7 @@ FROM dbo.tb_movein m
 WHERE m.date_out IS NOT NULL
   AND m.date_out <> ''
   AND ISDATE(m.date_out) = 1
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) BETWEEN 0 AND @maxDays
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(m.date_out AS DATE)) BETWEEN 1 AND @maxDays
   AND ISNULL(m.prd_prd, '') <> '모아즈'
 ORDER BY m.date_out ASC, m.cust;";
 

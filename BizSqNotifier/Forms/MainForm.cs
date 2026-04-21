@@ -251,9 +251,11 @@ namespace BizSqNotifier
         {
             const string sql = @"
 SELECT COUNT(*) FROM dbo.tb_movein
-WHERE date_out IS NOT NULL AND date_out <> ''
-  AND ISDATE(date_out) = 1
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(date_out AS DATE)) BETWEEN 0 AND 7;";
+WHERE date_to IS NOT NULL AND date_to <> ''
+  AND ISDATE(date_to) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(date_to AS DATE)) BETWEEN 0 AND 7
+  AND (date_out IS NULL OR date_out = '')
+  AND ISNULL(prd_prd, '') <> '모아즈';";
             var r = DbManager.ExecuteScalar(sql);
             return Convert.ToInt32(r);
         }
@@ -394,10 +396,10 @@ WHERE date_out IS NOT NULL AND date_out <> ''
                 var list = new MoveOutService().GetTargetsWithinDays(7);
                 var dt = new System.Data.DataTable();
                 dt.Columns.Add("회사명"); dt.Columns.Add("지점"); dt.Columns.Add("상품");
-                dt.Columns.Add("호실"); dt.Columns.Add("퇴실일"); dt.Columns.Add("이메일");
+                dt.Columns.Add("호실"); dt.Columns.Add("계약종료일"); dt.Columns.Add("이메일");
                 foreach (var m in list)
                     dt.Rows.Add(m.CustName, m.BranchName, m.ProductName, m.OfficeNum,
-                        m.DateOut, m.Email ?? "(미등록)");
+                        m.DateTo, m.Email ?? "(미등록)");
                 ShowDetailGrid($"퇴실 예정 ({list.Count}건)", dt);
             }
             catch (Exception ex) { AppLog.Error("카드:퇴실 클릭 오류", ex); }
