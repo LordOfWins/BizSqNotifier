@@ -246,15 +246,14 @@ namespace BizSqNotifier
             catch { lblCardMoveInCount.Text = "-"; lblCardMoveInSub.Text = "조회 실패"; lblCardMoveInSub.ForeColor = Color.Red; }
         }
 
-        /// <summary>7일 이내 퇴실 건수 — 단일 쿼리로 조회 (성능 개선).</summary>
+        /// <summary>7일 이내 퇴실 예정 건수 — 퇴실 완료(date_out ≤ 오늘) 건은 제외.</summary>
         private int GetMoveOutCountWithin7Days()
         {
             const string sql = @"
 SELECT COUNT(*) FROM dbo.tb_movein
-WHERE date_to IS NOT NULL AND date_to <> ''
-  AND ISDATE(date_to) = 1
-  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(date_to AS DATE)) BETWEEN 0 AND 7
-  AND (date_out IS NULL OR date_out = '')
+WHERE date_out IS NOT NULL AND date_out <> ''
+  AND ISDATE(date_out) = 1
+  AND DATEDIFF(DAY, CAST(GETDATE() AS DATE), CAST(date_out AS DATE)) BETWEEN 1 AND 7
   AND ISNULL(prd_prd, '') <> '모아즈';";
             var r = DbManager.ExecuteScalar(sql);
             return Convert.ToInt32(r);
@@ -271,9 +270,12 @@ WHERE date_to IS NOT NULL AND date_to <> ''
                 MailTypes.RenewalAuto, MailTypes.MoveOut };
             var labels = new Dictionary<string, string>
             {
-                [MailTypes.MoveIn] = "입주 안내", [MailTypes.Unpaid1st] = "미납 1차",
-                [MailTypes.Unpaid2nd] = "미납 2차", [MailTypes.UnpaidFinal] = "미납 최종",
-                [MailTypes.RenewalManual] = "갱신 수동", [MailTypes.RenewalAuto] = "갱신 자동",
+                [MailTypes.MoveIn] = "입주 안내",
+                [MailTypes.Unpaid1st] = "미납 1차",
+                [MailTypes.Unpaid2nd] = "미납 2차",
+                [MailTypes.UnpaidFinal] = "미납 최종",
+                [MailTypes.RenewalManual] = "갱신 수동",
+                [MailTypes.RenewalAuto] = "갱신 자동",
                 [MailTypes.MoveOut] = "퇴실 안내"
             };
 
@@ -396,10 +398,10 @@ WHERE date_to IS NOT NULL AND date_to <> ''
                 var list = new MoveOutService().GetTargetsWithinDays(7);
                 var dt = new System.Data.DataTable();
                 dt.Columns.Add("회사명"); dt.Columns.Add("지점"); dt.Columns.Add("상품");
-                dt.Columns.Add("호실"); dt.Columns.Add("계약종료일"); dt.Columns.Add("이메일");
+                dt.Columns.Add("호실"); dt.Columns.Add("퇴실예정일"); dt.Columns.Add("이메일");
                 foreach (var m in list)
                     dt.Rows.Add(m.CustName, m.BranchName, m.ProductName, m.OfficeNum,
-                        m.DateTo, m.Email ?? "(미등록)");
+                        m.DateOut, m.Email ?? "(미등록)");
                 ShowDetailGrid($"퇴실 예정 ({list.Count}건)", dt);
             }
             catch (Exception ex) { AppLog.Error("카드:퇴실 클릭 오류", ex); }
@@ -481,22 +483,49 @@ WHERE date_to IS NOT NULL AND date_to <> ''
                 Size = new Size(380, 220),
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 StartPosition = FormStartPosition.CenterParent,
-                MaximizeBox = false, MinimizeBox = false
+                MaximizeBox = false,
+                MinimizeBox = false
             })
             {
                 var lblId = new Label { Text = "복합기 ID:", Location = new Point(20, 24), AutoSize = true };
-                var txtId = new TextBox { Location = new Point(120, 20), Size = new Size(220, 23),
-                    Text = UserSettings.Current.PrinterLoginId };
+                var txtId = new TextBox
+                {
+                    Location = new Point(120, 20),
+                    Size = new Size(220, 23),
+                    Text = UserSettings.Current.PrinterLoginId
+                };
                 var lblPw = new Label { Text = "복합기 PW:", Location = new Point(20, 60), AutoSize = true };
-                var txtPw = new TextBox { Location = new Point(120, 56), Size = new Size(220, 23),
-                    Text = UserSettings.Current.PrinterLoginPw };
-                var lblInfo = new Label { Text = $"{info.CustName} / {info.BranchName} / {info.OfficeNum}\n{info.Email}",
-                    Location = new Point(20, 96), AutoSize = true, ForeColor = Color.FromArgb(127, 140, 141) };
-                var btnOk = new Button { Text = "발송", Location = new Point(140, 140), Size = new Size(90, 32),
-                    BackColor = Color.FromArgb(39, 174, 96), ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat, DialogResult = DialogResult.OK };
-                var btnCancel = new Button { Text = "취소", Location = new Point(240, 140), Size = new Size(90, 32),
-                    FlatStyle = FlatStyle.Flat, DialogResult = DialogResult.Cancel };
+                var txtPw = new TextBox
+                {
+                    Location = new Point(120, 56),
+                    Size = new Size(220, 23),
+                    Text = UserSettings.Current.PrinterLoginPw
+                };
+                var lblInfo = new Label
+                {
+                    Text = $"{info.CustName} / {info.BranchName} / {info.OfficeNum}\n{info.Email}",
+                    Location = new Point(20, 96),
+                    AutoSize = true,
+                    ForeColor = Color.FromArgb(127, 140, 141)
+                };
+                var btnOk = new Button
+                {
+                    Text = "발송",
+                    Location = new Point(140, 140),
+                    Size = new Size(90, 32),
+                    BackColor = Color.FromArgb(39, 174, 96),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.OK
+                };
+                var btnCancel = new Button
+                {
+                    Text = "취소",
+                    Location = new Point(240, 140),
+                    Size = new Size(90, 32),
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.Cancel
+                };
 
                 dlg.Controls.AddRange(new Control[] { lblId, txtId, lblPw, txtPw, lblInfo, btnOk, btnCancel });
                 dlg.AcceptButton = btnOk;
